@@ -14,6 +14,13 @@ namespace Asphalt
 
         public override BuildingDef CreateBuildingDef()
         {
+
+            float[] construction_mass = new float[2] { 200f, 50f };
+            string[] construction_materials = new string[1]
+            {
+              "Bitumen"
+            };
+
             BuildingDef buildingDef = BuildingTemplates.CreateBuildingDef(
                 id: ID,
                 width: 1,
@@ -22,7 +29,7 @@ namespace Asphalt
                 hitpoints: 100,
                 construction_time: 30f,
                 construction_mass: BUILDINGS.CONSTRUCTION_MASS_KG.TIER2,
-                construction_materials: MATERIALS.RAW_MINERALS,
+                construction_materials: construction_materials,
                 melting_point: 1600f,
                 build_location_rule: BuildLocationRule.Tile,
                 decor: BUILDINGS.DECOR.BONUS.TIER0,
@@ -45,9 +52,9 @@ namespace Asphalt
             buildingDef.BlockTileMaterial = Assets.GetMaterial("tiles_solid");
 
             BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info")); 
-            decorBlockTileInfo.atlas = GetCustomAtlas("assets\\tiles_asphalt_tops", this.GetType(), decorBlockTileInfo.atlas);
+            decorBlockTileInfo.atlas = GetCustomAtlas("anim\\assets\\tiles_asphalt_tops", this.GetType(), decorBlockTileInfo.atlas);
 
-            buildingDef.BlockTileAtlas = GetCustomAtlas("assets\\tiles_asphalt", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
+            buildingDef.BlockTileAtlas = GetCustomAtlas("anim\\assets\\tiles_asphalt", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
             buildingDef.BlockTilePlaceAtlas = Assets.GetTextureAtlas("tiles_mesh_place");
             buildingDef.DecorBlockTileInfo = decorBlockTileInfo;
             buildingDef.DecorPlaceBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info");
