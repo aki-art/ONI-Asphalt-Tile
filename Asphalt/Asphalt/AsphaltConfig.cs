@@ -22,7 +22,7 @@ namespace Asphalt
                 hitpoints: 100,
                 construction_time: 30f,
                 construction_mass: BUILDINGS.CONSTRUCTION_MASS_KG.TIER2,
-                construction_materials: MATERIALS.ALL_MINERALS,
+                construction_materials: MATERIALS.RAW_MINERALS,
                 melting_point: 1600f,
                 build_location_rule: BuildLocationRule.Tile,
                 decor: BUILDINGS.DECOR.BONUS.TIER0,
