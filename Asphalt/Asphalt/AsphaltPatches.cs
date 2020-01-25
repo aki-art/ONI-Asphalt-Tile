@@ -2,6 +2,7 @@
 using STRINGS;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -23,9 +24,20 @@ namespace Asphalt
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.NAME", NAME);
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.EFFECT", EFFECT);
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.DESC", DESC);
+                Strings.Add($"STRINGS.BUILDINGS.PREFABS.OILREFINERY.EFFECT", $"Converts {UI.FormatAsLink("Crude Oil", "CRUDEOIL")} into {UI.FormatAsLink("Petroleum", "PETROLEUM")}, {UI.FormatAsLink("Bitumen", "BITUMEN")} and {UI.FormatAsLink("Natural Gas", "METHANE")}.");
 
                 ModUtil.AddBuildingToPlanScreen("Base", AsphaltConfig.ID);
+            }
+        }
 
+        [HarmonyPatch(typeof(Db))]
+        [HarmonyPatch("Initialize")]
+        public static class Db_Initialize_Patch
+        {
+            public static void Prefix()
+            {
+                var techList = new List<string>(Database.Techs.TECH_GROUPING["ImprovedCombustion"]) { AsphaltConfig.ID };
+                Database.Techs.TECH_GROUPING["ImprovedCombustion"] = techList.ToArray();
             }
         }
 
@@ -34,8 +46,6 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go, Tag prefab_tag)
             {
-                // arbitrary output values. needs actual balancing.
-
                 ElementDropper elementDropper = go.AddComponent<ElementDropper>();
                 elementDropper.emitMass = 100f;
                 elementDropper.emitTag = new Tag("Bitumen");
