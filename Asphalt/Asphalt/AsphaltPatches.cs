@@ -1,5 +1,6 @@
 ﻿using Harmony;
 using STRINGS;
+using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
@@ -24,6 +25,37 @@ namespace Asphalt
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.DESC", DESC);
 
                 ModUtil.AddBuildingToPlanScreen("Base", AsphaltConfig.ID);
+
+            }
+        }
+
+        [HarmonyPatch(typeof(OilRefineryConfig), "ConfigureBuildingTemplate")]
+        public static class OilRefineryConfig_ConfigureBuildingTemplate_Patch
+        {
+            public static void Postfix(GameObject go, Tag prefab_tag)
+            {
+                // arbitrary output values. needs actual balancing.
+
+                ElementDropper elementDropper = go.AddComponent<ElementDropper>();
+                elementDropper.emitMass = 50f;
+                elementDropper.emitTag = new Tag("Bitumen");
+                elementDropper.emitOffset = new Vector3(0.0f, 0.0f, 0.0f);
+
+                ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
+                var bitumenOutput = new ElementConverter.OutputElement(
+                    kgPerSecond: 5f,
+                    element: SimHashes.Bitumen,
+                    minOutputTemperature: 348.15f,
+                    useEntityTemperature: false,
+                    storeOutput: true,
+                    outputElementOffsetx: 0.0f,
+                    outputElementOffsety: 1f,
+                    diseaseWeight: 1f,
+                    addedDiseaseIdx: 255,
+                    addedDiseaseCount: 0);
+
+                Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
+                elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
 
             }
         }
@@ -66,7 +98,7 @@ namespace Asphalt
         private static Texture2D getTex(string name)
         {
             Texture2D tex = null;
-            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); 
+            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var texFile = Path.Combine(dir, name + ".png");
 
             if (File.Exists(texFile))
