@@ -42,9 +42,14 @@ namespace Asphalt
             buildingDef.ConstructionOffsetFilter = BuildingDef.ConstructionOffsetFilter_OneDown;
             buildingDef.isKAnimTile = true;
 
-            buildingDef.BlockTileAtlas = GetCustomAtlas("assets\\tile_asphalt", this.GetType());
+            buildingDef.BlockTileMaterial = Assets.GetMaterial("tiles_solid");
+
+            BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info")); 
+            decorBlockTileInfo.atlas = GetCustomAtlas("assets\\tiles_asphalt_tops", this.GetType(), decorBlockTileInfo.atlas);
+
+            buildingDef.BlockTileAtlas = GetCustomAtlas("assets\\tiles_asphalt", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
             buildingDef.BlockTilePlaceAtlas = Assets.GetTextureAtlas("tiles_mesh_place");
-            buildingDef.DecorBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info"); ;
+            buildingDef.DecorBlockTileInfo = decorBlockTileInfo;
             buildingDef.DecorPlaceBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info");
 
             return buildingDef;
@@ -78,7 +83,7 @@ namespace Asphalt
 
         // This code is courtesy of CynicalBusiness
         // Original proof of concept: https://lab.vevox.io/games/oxygen-not-included/matts-mods/blob/master/IndustrializationFundementals/Building/TileWoodConfig.cs
-        public static TextureAtlas GetCustomAtlas(string name, Type type, string reference_atlas = "tiles_metal")
+        public static TextureAtlas GetCustomAtlas(string name, Type type, TextureAtlas tileAtlas)
         {
             var dir = Path.GetDirectoryName(type.Assembly.Location);
             var texFile = Path.Combine(dir, name + ".png");
@@ -93,7 +98,6 @@ namespace Asphalt
                 var tex = new Texture2D(2, 2);
                 tex.LoadImage(data);
 
-                var tileAtlas = Assets.GetTextureAtlas(reference_atlas);
                 atlas = ScriptableObject.CreateInstance<TextureAtlas>();
                 atlas.texture = tex;
                 atlas.vertexScale = tileAtlas.vertexScale;
