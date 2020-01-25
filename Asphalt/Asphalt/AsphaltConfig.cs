@@ -7,20 +7,11 @@ namespace Asphalt
 {
     public class AsphaltConfig : IBuildingConfig
     {
-        //bitumen = SimHashes.Bitumen.CreateTag();
-
         public static readonly int BlockTileConnectorID = Hash.SDBMLower("tiles_bunker_tops");
         public const string ID = "AsphaltTile";
 
         public override BuildingDef CreateBuildingDef()
         {
-
-            float[] construction_mass = new float[2] { 200f, 50f };
-            string[] construction_materials = new string[1]
-            {
-              "Bitumen"
-            };
-
             BuildingDef buildingDef = BuildingTemplates.CreateBuildingDef(
                 id: ID,
                 width: 1,
@@ -28,11 +19,11 @@ namespace Asphalt
                 anim: "floor_mesh_kanim",
                 hitpoints: 100,
                 construction_time: 30f,
-                construction_mass: BUILDINGS.CONSTRUCTION_MASS_KG.TIER2,
-                construction_materials: construction_materials,
+                construction_mass: BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,
+                construction_materials: new string[1] { "Bitumen" },
                 melting_point: 1600f,
                 build_location_rule: BuildLocationRule.Tile,
-                decor: BUILDINGS.DECOR.BONUS.TIER0,
+                decor: BUILDINGS.DECOR.PENALTY.TIER0,
                 noise: NOISE_POLLUTION.NONE
             );
 
@@ -48,10 +39,10 @@ namespace Asphalt
             buildingDef.SceneLayer = Grid.SceneLayer.TileMain;
             buildingDef.ConstructionOffsetFilter = BuildingDef.ConstructionOffsetFilter_OneDown;
             buildingDef.isKAnimTile = true;
-
+            buildingDef.isSolidTile = true;
             buildingDef.BlockTileMaterial = Assets.GetMaterial("tiles_solid");
 
-            BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info")); 
+            BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info"));
             decorBlockTileInfo.atlas = GetCustomAtlas("anim\\assets\\tiles_asphalt_tops", this.GetType(), decorBlockTileInfo.atlas);
 
             buildingDef.BlockTileAtlas = GetCustomAtlas("anim\\assets\\tiles_asphalt", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
@@ -96,8 +87,6 @@ namespace Asphalt
             var texFile = Path.Combine(dir, name + ".png");
 
             TextureAtlas atlas = null;
-
-            Debug.Log("Trying to find images at: " + texFile);
 
             if (File.Exists(texFile))
             {

@@ -37,7 +37,7 @@ namespace Asphalt
                 // arbitrary output values. needs actual balancing.
 
                 ElementDropper elementDropper = go.AddComponent<ElementDropper>();
-                elementDropper.emitMass = 50f;
+                elementDropper.emitMass = 100f;
                 elementDropper.emitTag = new Tag("Bitumen");
                 elementDropper.emitOffset = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -86,9 +86,9 @@ namespace Asphalt
                     state: Element.State.Solid,
                     kanim: animFile,
                     material: material,
-                    colour: new Color32(255, 255, 255, 255), // set these later
-                    ui_colour: new Color32(255, 255, 255, 255),
-                    conduit_colour: new Color32(255, 255, 255, 255)
+                    colour: new Color32(65, 65, 79, 255), 
+                    ui_colour: new Color32(65, 65, 79, 255),
+                    conduit_colour: new Color32(65, 65, 79, 255)
                     );
 
                 bitumen.substance = bitumensubstance;
