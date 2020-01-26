@@ -88,7 +88,7 @@ namespace Asphalt
 
                 var material = subTable.solidMaterial;
                 KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim");
-                var tex = getTex("anim\\assets\\solid_bitumen");
+                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen"));
                 material.mainTexture = tex;
 
                 Substance bitumensubstance = ModUtil.CreateSubstance(

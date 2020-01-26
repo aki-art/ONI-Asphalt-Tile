@@ -42,11 +42,11 @@ namespace Asphalt
             buildingDef.isSolidTile = true;
             buildingDef.BlockTileMaterial = Assets.GetMaterial("tiles_solid");
 
-            buildingDef.BlockTileAtlas = GetCustomAtlas("anim\\assets\\tiles_asphalt", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
-            buildingDef.BlockTilePlaceAtlas = GetCustomAtlas("anim\\assets\\tiles_asphalt_place", this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
+            buildingDef.BlockTileAtlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt" ), this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
+            buildingDef.BlockTilePlaceAtlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt_place" ), this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
 
             BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info"));
-            decorBlockTileInfo.atlas = GetCustomAtlas("anim\\assets\\tiles_asphalt_tops", this.GetType(), decorBlockTileInfo.atlas);
+            decorBlockTileInfo.atlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt_tops"), this.GetType(), decorBlockTileInfo.atlas);
             buildingDef.DecorBlockTileInfo = decorBlockTileInfo;
             buildingDef.DecorPlaceBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info");
 
