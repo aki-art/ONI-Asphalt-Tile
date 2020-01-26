@@ -1,4 +1,5 @@
-﻿using System;
+﻿using STRINGS;
+using System;
 using System.IO;
 using TUNING;
 using UnityEngine;
@@ -10,6 +11,10 @@ namespace Asphalt
         public static readonly int BlockTileConnectorID = Hash.SDBMLower("tiles_bunker_tops");
         public const string ID = "AsphaltTile";
 
+        public static LocString NAME = UI.FormatAsLink("Asphalt Tile", nameof(AsphaltConfig.ID));
+        public static LocString DESC = "Asphalt tiles feel great to run on.";
+        public static LocString EFFECT = "Used to build the walls and floors of rooms.\n\nSubstantially increases Duplicant runspeed.";
+
         public override BuildingDef CreateBuildingDef()
         {
             BuildingDef buildingDef = BuildingTemplates.CreateBuildingDef(
@@ -19,7 +24,7 @@ namespace Asphalt
                 anim: "floor_asphalt_kanim",
                 hitpoints: 100,
                 construction_time: 30f,
-                construction_mass: BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,
+                construction_mass: TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,
                 construction_materials: new string[1] { "Bitumen" },
                 melting_point: 1600f,
                 build_location_rule: BuildLocationRule.Tile,
@@ -62,7 +67,7 @@ namespace Asphalt
             go.AddOrGet<KAnimGridTileVisualizer>().blockTileConnectorID = MeshTileConfig.BlockTileConnectorID;
             go.AddOrGet<BuildingHP>().destroyOnDamaged = true;
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
-            simCellOccupier.movementSpeedMultiplier = 3.0f;
+            simCellOccupier.movementSpeedMultiplier = Config.Instance.speedMultiplier; // Defaults to 2.0
             simCellOccupier.strengthMultiplier = 2f;
         }
 

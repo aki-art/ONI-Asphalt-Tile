@@ -1,4 +1,6 @@
 ﻿using Harmony;
+using PeterHan.PLib;
+using PeterHan.PLib.Options;
 using STRINGS;
 using System;
 using System.Collections;
@@ -11,19 +13,26 @@ namespace Asphalt
 {
     class AsphaltPatches
     {
+
+        public static class Mod_OnLoad
+        {
+            public static void OnLoad()
+            {
+                // PLib initialization
+                PUtil.InitLibrary();
+                POptions.RegisterOptions(typeof(Config));
+            }
+        }
+
         [HarmonyPatch(typeof(GeneratedBuildings), "LoadGeneratedBuildings")]
         public static class GeneratedBuildings_LoadGeneratedBuildings_Patch
         {
             public static void Prefix()
             {
-                LocString NAME = UI.FormatAsLink("Asphalt Tile", nameof(AsphaltConfig.ID));
-                LocString DESC = "Asphalt tiles feel great to run on.";
-                LocString EFFECT = "Used to build the walls and floors of rooms.\n\nSubstantially increases Duplicant runspeed.";
-
                 string ID = AsphaltConfig.ID.ToUpperInvariant();
-                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.NAME", NAME);
-                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.EFFECT", EFFECT);
-                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.DESC", DESC);
+                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.NAME", AsphaltConfig.NAME);
+                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.EFFECT", AsphaltConfig.EFFECT);
+                Strings.Add($"STRINGS.BUILDINGS.PREFABS.{ID}.DESC", AsphaltConfig.DESC);
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.OILREFINERY.EFFECT", $"Converts {UI.FormatAsLink("Crude Oil", "CRUDEOIL")} into {UI.FormatAsLink("Petroleum", "PETROLEUM")}, {UI.FormatAsLink("Bitumen", "BITUMEN")} and {UI.FormatAsLink("Natural Gas", "METHANE")}.");
 
                 ModUtil.AddBuildingToPlanScreen("Base", AsphaltConfig.ID);
@@ -66,9 +75,9 @@ namespace Asphalt
 
                 Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
                 elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
-
             }
         }
+
 
         [HarmonyPatch(typeof(ElementLoader), "Load")]
         private static class Patch_ElementLoader_Load
@@ -96,7 +105,7 @@ namespace Asphalt
                     state: Element.State.Solid,
                     kanim: animFile,
                     material: material,
-                    colour: new Color32(65, 65, 79, 255), 
+                    colour: new Color32(65, 65, 79, 255),
                     ui_colour: new Color32(65, 65, 79, 255),
                     conduit_colour: new Color32(65, 65, 79, 255)
                     );
@@ -134,5 +143,6 @@ namespace Asphalt
                 Debug.LogWarningFormat("Element {0} has category {1}, but that isn't in GameTags.MaterialCategores!", (object)element_id, (object)materialCategoryField);
             return tag;
         }
+
     }
 }
