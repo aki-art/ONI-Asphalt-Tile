@@ -57,12 +57,13 @@ namespace Asphalt
         {
             GeneratedBuildings.MakeBuildingAlwaysOperational(go);
             BuildingConfigManager.Instance.IgnoreDefaultKComponent(typeof(RequiresFoundation), prefab_tag);
-            go.AddOrGet<SimCellOccupier>().doReplaceElement = false;
+            go.AddOrGet<SimCellOccupier>().doReplaceElement = true;
             go.AddOrGet<TileTemperature>();
             go.AddOrGet<KAnimGridTileVisualizer>().blockTileConnectorID = MeshTileConfig.BlockTileConnectorID;
             go.AddOrGet<BuildingHP>().destroyOnDamaged = true;
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
             simCellOccupier.movementSpeedMultiplier = 3.0f;
+            simCellOccupier.strengthMultiplier = 2f;
         }
 
         public override void DoPostConfigureComplete(GameObject go)
