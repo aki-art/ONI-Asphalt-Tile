@@ -16,5 +16,6 @@ namespace Asphalt
         [Limit(0, 20)]
         [JsonProperty]
         public float speedMultiplier { get; set; } = 2.0f;
+
     }
 }

@@ -94,6 +94,7 @@ namespace Asphalt
                 Tag phaseTag = TagManager.Create("Solid");
                 var bitumen = ElementLoader.FindElementByHash(SimHashes.Bitumen);
                 bitumen.materialCategory = CreateMaterialCategoryTag(bitumen.id, phaseTag, "ManufacturedMaterial");
+                bitumen.oreTags = new Tag[] { GameTags.ManufacturedMaterial };
 
                 var material = subTable.solidMaterial;
                 KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim");
