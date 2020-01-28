@@ -93,12 +93,14 @@ namespace Asphalt
             {
                 Tag phaseTag = TagManager.Create("Solid");
                 var bitumen = ElementLoader.FindElementByHash(SimHashes.Bitumen);
-                bitumen.materialCategory = CreateMaterialCategoryTag(bitumen.id, phaseTag, "ManufacturedMaterial");
-                bitumen.oreTags = new Tag[] { GameTags.ManufacturedMaterial };
+                bitumen.materialCategory = CreateMaterialCategoryTag(bitumen.id, phaseTag, "ManufacturedMaterial"); // This tag is for treefilterable and regular storage
+                bitumen.oreTags = new Tag[] { GameTags.ManufacturedMaterial }; // This tag is for the autosweeper
 
+                KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim"); // Dropped bitumen art
+
+                // Assigning new material and texture
                 var material = subTable.solidMaterial;
-                KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim");
-                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen"));
+                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen")); 
                 material.mainTexture = tex;
 
                 Substance bitumensubstance = ModUtil.CreateSubstance(
@@ -115,6 +117,7 @@ namespace Asphalt
             }
         }
 
+        // Manually loading in texture file from assembly directory
         private static Texture2D getTex(string name)
         {
             Texture2D tex = null;
