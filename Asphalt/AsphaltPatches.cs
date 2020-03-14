@@ -14,15 +14,26 @@ namespace Asphalt
     class AsphaltPatches
     {
 
+        public static AssetBundle AssetBundle { get; set; }
+        public static GameObject ModSettingsScreenPrefab { get; set; }
+        public static string modPath { get; set; }
         public static class Mod_OnLoad
         {
-            public static void OnLoad()
+            public static void OnLoad(string path)
             {
-                // PLib initialization
-                PUtil.InitLibrary();
-                POptions.RegisterOptions(typeof(Config));
+                modPath = path;
+                PUtil.InitLibrary(true);
+                POptions.RegisterOptions(typeof(UserSettings));
+                POptions.ReadSettings<UserSettings>();
+                CustomAssets.LoadAssetBundle(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "assets"), "settingsui");
+
+                if(UserSettings.Instance.NukeAsphaltTiles)
+                {
+                   // new Nuker();
+                }
             }
         }
+
 
         [HarmonyPatch(typeof(GeneratedBuildings), "LoadGeneratedBuildings")]
         public static class GeneratedBuildings_LoadGeneratedBuildings_Patch
@@ -36,6 +47,19 @@ namespace Asphalt
                 Strings.Add($"STRINGS.BUILDINGS.PREFABS.OILREFINERY.EFFECT", $"Converts {UI.FormatAsLink("Crude Oil", "CRUDEOIL")} into {UI.FormatAsLink("Petroleum", "PETROLEUM")}, {UI.FormatAsLink("Bitumen", "BITUMEN")} and {UI.FormatAsLink("Natural Gas", "METHANE")}.");
 
                 ModUtil.AddBuildingToPlanScreen("Base", AsphaltConfig.ID);
+            }
+        }
+
+        /// <summary>
+        /// Add Bitumen as edible for hatches
+        /// </summary>
+        [HarmonyPatch(typeof(BaseHatchConfig))]
+        [HarmonyPatch("BasicRockDiet")]
+        public static class HatchConfig_BasicRockDiet_Patch
+        {
+            public static void Postfix(List<Diet.Info> __result)
+            {
+                __result[0].consumedTags.Add(SimHashes.Bitumen.CreateTag());
             }
         }
 
@@ -55,26 +79,29 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go, Tag prefab_tag)
             {
-                ElementDropper elementDropper = go.AddComponent<ElementDropper>();
-                elementDropper.emitMass = 100f;
-                elementDropper.emitTag = new Tag("Bitumen");
-                elementDropper.emitOffset = new Vector3(0.0f, 0.0f, 0.0f);
+                if(UserSettings.Instance.BitumenProduction)
+                {
+                    ElementDropper elementDropper = go.AddComponent<ElementDropper>();
+                    elementDropper.emitMass = 100f;
+                    elementDropper.emitTag = new Tag("Bitumen");
+                    elementDropper.emitOffset = new Vector3(0.0f, 0.0f, 0.0f);
 
-                ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
-                var bitumenOutput = new ElementConverter.OutputElement(
-                    kgPerSecond: 5f,
-                    element: SimHashes.Bitumen,
-                    minOutputTemperature: 348.15f,
-                    useEntityTemperature: false,
-                    storeOutput: true,
-                    outputElementOffsetx: 0.0f,
-                    outputElementOffsety: 1f,
-                    diseaseWeight: 1f,
-                    addedDiseaseIdx: 255,
-                    addedDiseaseCount: 0);
+                    ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
+                    var bitumenOutput = new ElementConverter.OutputElement(
+                        kgPerSecond: 5f,
+                        element: SimHashes.Bitumen,
+                        minOutputTemperature: 348.15f,
+                        useEntityTemperature: false,
+                        storeOutput: true,
+                        outputElementOffsetx: 0.0f,
+                        outputElementOffsety: 1f,
+                        diseaseWeight: 1f,
+                        addedDiseaseIdx: 255,
+                        addedDiseaseCount: 0);
 
-                Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
-                elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
+                    Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
+                    elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
+                }
             }
         }
 
@@ -100,7 +127,7 @@ namespace Asphalt
 
                 // Assigning new material and texture
                 var material = subTable.solidMaterial;
-                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen")); 
+                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen"));
                 material.mainTexture = tex;
 
                 Substance bitumensubstance = ModUtil.CreateSubstance(

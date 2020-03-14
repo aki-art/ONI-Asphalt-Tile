@@ -67,7 +67,7 @@ namespace Asphalt
             go.AddOrGet<KAnimGridTileVisualizer>().blockTileConnectorID = MeshTileConfig.BlockTileConnectorID;
             go.AddOrGet<BuildingHP>().destroyOnDamaged = true;
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
-            simCellOccupier.movementSpeedMultiplier = Config.Instance.speedMultiplier; // Defaults to 2.0
+            simCellOccupier.movementSpeedMultiplier =  (float)UserSettings.Instance.SpeedMultiplier; // Defaults to 2.0
             simCellOccupier.strengthMultiplier = 2f;
         }
 
