@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Asphalt
 {
-    class NukeScreen : KMonoBehaviour
+    // WIP, Broken atm
+    // Huge issues with trying to pass values between elements of UI.
+    class NukeScreen : KScreen
     {
+        public const float SCREEN_SORT_KEY = 500f;
         /* This is far from perfect, but it works stable now.
          * Will be updated in the future. */
 
@@ -15,6 +19,21 @@ namespace Asphalt
 
         private static Transform tileToggle;
         private static Transform bitumenSelector;
+
+        private static bool NukeAsphalt = false;
+        private static string bitumenOption;
+
+        private UnityAction<NukeScreen> onCancelClick;
+
+        SettingsToggle tilesToggle;
+        SettingsCycle bitumenCycler;
+        public override void OnKeyDown(KButtonEvent e)
+        {
+            if (e.TryConsume(Action.Escape))
+                Deactivate();
+            else
+                base.OnKeyDown(e);
+        }
 
         public NukeScreen()
         {
@@ -80,62 +99,62 @@ namespace Asphalt
         {
             private Toggle toggle;
 
-            public bool GetValue()
+            public bool IsOn()
             {
                 return toggle.isOn;
             }
             public SettingsToggle(Transform togglePanel, bool state)
             {
+                void OnValueChanged(bool arg0)
+                {
+                    NukeAsphalt = arg0;
+                }
 
                 toggle = togglePanel.transform.Find("Toggle").gameObject.GetComponent<Toggle>();
 
                 toggle.isOn = state;
+                toggle.onValueChanged.AddListener(OnValueChanged);
             }
+
         }
-
-
 
         public void Initialize()
         {
-            // Cancel
-            void Deactivate()
+            KScreenManager.Instance.DisableInput(true);
+            void onCancelClicked()
             {
-                nukeDialog.SetActive(false);
-                nukeDialog = null;
+                nukeDialog.gameObject.SetActive(false);
+                Nuker.ChangeAllAsphaltToSandstoneTiles();
             }
 
-            void Nuke()
-            {
-                Log.Info("Nuking");
-                NukePatches.NukeAsphalt = true;
-                NukePatches.ChangeAsphaltToSandstoneTiles();
-                nukeDialog.SetActive(false);
-                nukeDialog = null;
-            }
+            // Scale this UI along the regular UI
+            ModAssets.Prefabs.nukeScreenPrefab.gameObject.GetComponent<Canvas>().GetComponent<CanvasScaler>().scaleFactor = FindObjectOfType<KCanvasScaler>().GetCanvasScale() * 1.1f;
 
-            CustomAssets.NukeModDialogPrefab.gameObject.GetComponent<Canvas>().GetComponent<CanvasScaler>().scaleFactor = FindObjectOfType<KCanvasScaler>().GetCanvasScale() * 1.1f;
-
-            nukeDialog = Instantiate(CustomAssets.NukeModDialogPrefab);
+            nukeDialog = Instantiate(ModAssets.Prefabs.nukeScreenPrefab);
             canvas = nukeDialog.gameObject.GetComponent<Canvas>();
 
             tileToggle = canvas.transform.Find("ModSettingsPanel/TogglePanel");
             bitumenSelector = canvas.transform.Find("ModSettingsPanel/CycleSelectorPanel");
 
-            Button cancelButton = canvas.transform.Find("ModSettingsPanel/CancelButton").GetComponent<Button>();
-            cancelButton.onClick.AddListener(Deactivate);
-            Button okButton = canvas.transform.Find("ModSettingsPanel/OKButton").GetComponent<Button>();
-            okButton.onClick.AddListener(Nuke);
-
-            SettingsToggle glassSculptureFabulousToggle = new SettingsToggle(tileToggle, true);
+            tilesToggle = new SettingsToggle(tileToggle, true);
 
             var bitumenOptions = new List<KeyValuePair<string, string>>();
             bitumenOptions.Add(new KeyValuePair<string, string>("Remove All", "Removes all bitumen from floor and storages."));
             bitumenOptions.Add(new KeyValuePair<string, string>("Refund", "Removes  all bitumen from floor and storages, refund some oil for it (1:4)."));
             bitumenOptions.Add(new KeyValuePair<string, string>("Leave", "Does not touch bitumen."));
 
-            SettingsCycle bitumenCycler = new SettingsCycle(bitumenSelector, bitumenOptions);
+            bitumenCycler = new SettingsCycle(bitumenSelector, bitumenOptions);
+
+         
+            Button cancelButton = canvas.transform.Find("ModSettingsPanel/CancelButton").GetComponent<Button>();
+            //cancelButton.onClick.AddListener(null);
+            Button okButton = canvas.transform.Find("ModSettingsPanel/OKButton").GetComponent<Button>();
+            okButton.onClick.AddListener(onCancelClicked);
+
 
         }
+
+
     }
 }
 

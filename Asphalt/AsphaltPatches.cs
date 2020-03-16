@@ -13,28 +13,21 @@ namespace Asphalt
 {
     class AsphaltPatches
     {
-
-        public static AssetBundle AssetBundle { get; set; }
-        public static GameObject ModSettingsScreenPrefab { get; set; }
-        public static string modPath { get; set; }
+        public static string ModPath { get; set; }
         public static class Mod_OnLoad
         {
             public static void OnLoad(string path)
             {
-                modPath = path;
+                ModPath = path;
                 PUtil.InitLibrary(true);
                 POptions.RegisterOptions(typeof(UserSettings));
                 POptions.ReadSettings<UserSettings>();
-                CustomAssets.LoadAssetBundle(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "assets"), "settingsui");
 
-                if(UserSettings.Instance.NukeAsphaltTiles)
-                {
-                   // new Nuker();
-                }
+                ModAssets.LoadAll();
             }
         }
 
-
+        // Add building strings, add it to building plan
         [HarmonyPatch(typeof(GeneratedBuildings), "LoadGeneratedBuildings")]
         public static class GeneratedBuildings_LoadGeneratedBuildings_Patch
         {
@@ -50,11 +43,8 @@ namespace Asphalt
             }
         }
 
-        /// <summary>
-        /// Add Bitumen as edible for hatches
-        /// </summary>
-        [HarmonyPatch(typeof(BaseHatchConfig))]
-        [HarmonyPatch("BasicRockDiet")]
+        // Add Bitumen as edible for hatches
+        [HarmonyPatch(typeof(BaseHatchConfig), "BasicRockDiet")]
         public static class HatchConfig_BasicRockDiet_Patch
         {
             public static void Postfix(List<Diet.Info> __result)
@@ -63,49 +53,52 @@ namespace Asphalt
             }
         }
 
-        [HarmonyPatch(typeof(Db))]
-        [HarmonyPatch("Initialize")]
+        // Adding Asphalt tiles to the research tree.
+        [HarmonyPatch(typeof(Db), "Initialize")]
         public static class Db_Initialize_Patch
         {
             public static void Prefix()
             {
-                var techList = new List<string>(Database.Techs.TECH_GROUPING["ImprovedCombustion"]) { AsphaltConfig.ID };
+                var techList = new List<string>(Database.Techs.TECH_GROUPING["ImprovedCombustion"]) 
+                { 
+                    AsphaltConfig.ID 
+                };
                 Database.Techs.TECH_GROUPING["ImprovedCombustion"] = techList.ToArray();
             }
         }
 
+        // Making the Oil refinery produce bitumen
         [HarmonyPatch(typeof(OilRefineryConfig), "ConfigureBuildingTemplate")]
         public static class OilRefineryConfig_ConfigureBuildingTemplate_Patch
         {
-            public static void Postfix(GameObject go, Tag prefab_tag)
+            public static void Postfix(GameObject go)
             {
                 if(UserSettings.Instance.BitumenProduction)
                 {
                     ElementDropper elementDropper = go.AddComponent<ElementDropper>();
                     elementDropper.emitMass = 100f;
                     elementDropper.emitTag = new Tag("Bitumen");
-                    elementDropper.emitOffset = new Vector3(0.0f, 0.0f, 0.0f);
+                    elementDropper.emitOffset = Vector3.zero;
 
                     ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
+
                     var bitumenOutput = new ElementConverter.OutputElement(
                         kgPerSecond: 5f,
                         element: SimHashes.Bitumen,
                         minOutputTemperature: 348.15f,
                         useEntityTemperature: false,
                         storeOutput: true,
-                        outputElementOffsetx: 0.0f,
-                        outputElementOffsety: 1f,
-                        diseaseWeight: 1f,
-                        addedDiseaseIdx: 255,
-                        addedDiseaseCount: 0);
+                        outputElementOffsetx: 0,
+                        outputElementOffsety: 1f );
 
+                    // Pushing it into the outputElements array
                     Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
                     elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
                 }
             }
         }
 
-
+        // Fixing up bitumen
         [HarmonyPatch(typeof(ElementLoader), "Load")]
         private static class Patch_ElementLoader_Load
         {
@@ -118,61 +111,58 @@ namespace Asphalt
 
             private static void Postfix()
             {
+
                 Tag phaseTag = TagManager.Create("Solid");
                 var bitumen = ElementLoader.FindElementByHash(SimHashes.Bitumen);
-                bitumen.materialCategory = CreateMaterialCategoryTag(bitumen.id, phaseTag, "ManufacturedMaterial"); // This tag is for treefilterable and regular storage
-                bitumen.oreTags = new Tag[] { GameTags.ManufacturedMaterial }; // This tag is for the autosweeper
 
-                KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim"); // Dropped bitumen art
+                // Assigning appropiate tags
+                bitumen.materialCategory = CreateMaterialCategoryTag(phaseTag, GameTags.ManufacturedMaterial.ToString());      // This tag is for storage
+                bitumen.oreTags = new Tag[] { 
+                    GameTags.ManufacturedMaterial,                // This tag is for the autosweeper
+                    GameTags.BuildableAny,                        // This tag is for any building material category (Tempshift Plates, Wallpapers)
+                    GameTags.Solid                                // This tag is for mod compatibilities
+                };
+
+                // Pickupable bitumen art
+                KAnimFile animFile = Assets.Anims.Find(anim => anim.name == "solid_bitumen_kanim");
 
                 // Assigning new material and texture
+                if (ModAssets.bitumenSubstanceTexture == null)
+                {
+                    Log.Warning("Texture file not found for Bitumen.");
+                    return;
+                }
+
                 var material = subTable.solidMaterial;
-                var tex = getTex(Path.Combine(Path.Combine("anim", "assets"), "solid_bitumen"));
-                material.mainTexture = tex;
+                material.mainTexture = ModAssets.bitumenSubstanceTexture;
+                var darkSlateGreyColor = new Color32(65, 65, 79, 255);
 
-                Substance bitumensubstance = ModUtil.CreateSubstance(
-                    name: "Bitumen",
-                    state: Element.State.Solid,
-                    kanim: animFile,
-                    material: material,
-                    colour: new Color32(65, 65, 79, 255),
-                    ui_colour: new Color32(65, 65, 79, 255),
-                    conduit_colour: new Color32(65, 65, 79, 255)
-                    );
+                try
+                {
+                    Substance bitumensubstance = ModUtil.CreateSubstance(
+                        name: "Bitumen",
+                        state: Element.State.Solid,
+                        kanim: animFile,
+                        material: material,
+                        colour: darkSlateGreyColor,
+                        ui_colour: darkSlateGreyColor,
+                        conduit_colour: darkSlateGreyColor
+                        );
 
-                bitumen.substance = bitumensubstance;
+                    bitumen.substance = bitumensubstance;
+                }
+                catch(Exception e) {
+                    Log.Error("Could not assign new material to Bitumen element: " + e);
+                }
             }
         }
 
-        // Manually loading in texture file from assembly directory
-        private static Texture2D getTex(string name)
-        {
-            Texture2D tex = null;
-            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var texFile = Path.Combine(dir, name + ".png");
-
-            if (File.Exists(texFile))
-            {
-                var data = File.ReadAllBytes(texFile);
-                tex = new Texture2D(1, 1);
-                tex.LoadImage(data);
-            }
-            else
-                Debug.LogError($"ASPHALT: Could not load texture at path {texFile}.");
-            return tex;
-        }
-
-        private static Tag CreateMaterialCategoryTag(
-            SimHashes element_id,
-            Tag phaseTag,
-            string materialCategoryField)
+        private static Tag CreateMaterialCategoryTag(Tag phaseTag, string materialCategoryField)
         {
             if (string.IsNullOrEmpty(materialCategoryField))
                 return phaseTag;
-            Tag tag = TagManager.Create(materialCategoryField);
-            if (!GameTags.MaterialCategories.Contains(tag) && !GameTags.IgnoredMaterialCategories.Contains(tag))
-                Debug.LogWarningFormat("Element {0} has category {1}, but that isn't in GameTags.MaterialCategores!", (object)element_id, (object)materialCategoryField);
-            return tag;
+
+            return TagManager.Create(materialCategoryField);
         }
 
     }

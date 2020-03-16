@@ -6,7 +6,6 @@ namespace Asphalt
     {
         private static readonly string prefix = $"[ASPHALT]: ";
 
-        // Displays a message in INFO format. Attempts to turn the given argument into String
         public static void Info(object arg)
         {
             try
@@ -19,7 +18,6 @@ namespace Asphalt
             }
         }
 
-        // Displays a message in WARNING format. Attempts to turn the given argument into String
         public static void Warning(object arg)
         {
             try
@@ -32,7 +30,6 @@ namespace Asphalt
             }
         }
 
-        // Displays a message in ERROR format. Attempts to turn the given argument into String
         public static void Error(object arg)
         {
             try

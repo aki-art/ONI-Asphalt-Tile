@@ -8,12 +8,15 @@ namespace Asphalt
 {
     public class AsphaltConfig : IBuildingConfig
     {
-        public static readonly int BlockTileConnectorID = Hash.SDBMLower("tiles_bunker_tops");
         public const string ID = "AsphaltTile";
 
-        public static LocString NAME = UI.FormatAsLink("Asphalt Tile", nameof(AsphaltConfig.ID));
-        public static LocString DESC = "Asphalt tiles feel great to run on.";
-        public static LocString EFFECT = "Used to build the walls and floors of rooms.\n\nSubstantially increases Duplicant runspeed.";
+        public static readonly LocString NAME = UI.FormatAsLink("Asphalt Tile", ID);
+        public static readonly LocString DESC = "Asphalt tiles feel great to run on.";
+        public static readonly LocString EFFECT = "Used to build the walls and floors of rooms.\n\nSubstantially increases Duplicant runspeed.";
+
+        public static readonly int BlockTileConnectorID = Hash.SDBMLower("tiles_bunker_tops");
+
+        public string[] BitumenMaterials = new string[1] { "Bitumen" };
 
         public override BuildingDef CreateBuildingDef()
         {
@@ -21,14 +24,14 @@ namespace Asphalt
                 id: ID,
                 width: 1,
                 height: 1,
-                anim: "floor_asphalt_kanim",
-                hitpoints: 100,
-                construction_time: 30f,
-                construction_mass: TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,
-                construction_materials: new string[1] { "Bitumen" },
-                melting_point: 1600f,
+                anim: "floor_asphalt_kanim",                                                  // This controls UI/BuildMenu art
+                hitpoints: TUNING.BUILDINGS.HITPOINTS.TIER2,                                  // 100
+                construction_time: TUNING.BUILDINGS.CONSTRUCTION_TIME_SECONDS.TIER2,          // 30f
+                construction_mass: TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,               // 200f
+                construction_materials: BitumenMaterials,
+                melting_point: TUNING.BUILDINGS.MELTING_POINT_KELVIN.TIER1,                   // 1600f
                 build_location_rule: BuildLocationRule.Tile,
-                decor: new EffectorValues(-5, 1),
+                decor: new EffectorValues(-5, 1),                                             // -5 decor in a single tile range
                 noise: NOISE_POLLUTION.NONE
             );
 
@@ -45,13 +48,17 @@ namespace Asphalt
             buildingDef.ConstructionOffsetFilter = BuildingDef.ConstructionOffsetFilter_OneDown;
             buildingDef.isKAnimTile = true;
             buildingDef.isSolidTile = true;
+
             buildingDef.BlockTileMaterial = Assets.GetMaterial("tiles_solid");
 
-            buildingDef.BlockTileAtlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt" ), this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
-            buildingDef.BlockTilePlaceAtlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt_place" ), this.GetType(), Assets.GetTextureAtlas("tiles_metal"));
+            // Custom texture
+            TextureAtlas referenceAtlas = Assets.GetTextureAtlas("tiles_metal"); 
+            buildingDef.BlockTileAtlas = ModAssets.GetCustomAtlas(Path.Combine("anim", "assets", "tiles_asphalt"), GetType(), referenceAtlas);
+            buildingDef.BlockTilePlaceAtlas = ModAssets.GetCustomAtlas(Path.Combine("anim", "assets", "tiles_asphalt_place"), GetType(), referenceAtlas);
 
+            // Custom top pieces
             BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info"));
-            decorBlockTileInfo.atlas = GetCustomAtlas(Path.Combine(Path.Combine("anim", "assets"), "tiles_asphalt_tops"), this.GetType(), decorBlockTileInfo.atlas);
+            decorBlockTileInfo.atlas = ModAssets.GetCustomAtlas(Path.Combine("anim", "assets", "tiles_asphalt_tops"), GetType(), decorBlockTileInfo.atlas);
             buildingDef.DecorBlockTileInfo = decorBlockTileInfo;
             buildingDef.DecorPlaceBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info");
 
@@ -62,12 +69,14 @@ namespace Asphalt
         {
             GeneratedBuildings.MakeBuildingAlwaysOperational(go);
             BuildingConfigManager.Instance.IgnoreDefaultKComponent(typeof(RequiresFoundation), prefab_tag);
-            go.AddOrGet<SimCellOccupier>().doReplaceElement = true;
+
             go.AddOrGet<TileTemperature>();
             go.AddOrGet<KAnimGridTileVisualizer>().blockTileConnectorID = MeshTileConfig.BlockTileConnectorID;
             go.AddOrGet<BuildingHP>().destroyOnDamaged = true;
+
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
-            simCellOccupier.movementSpeedMultiplier =  (float)UserSettings.Instance.SpeedMultiplier; // Defaults to 2.0
+            simCellOccupier.doReplaceElement = true;
+            simCellOccupier.movementSpeedMultiplier = UserSettings.Instance.SpeedMultiplier;  // Defaults to 2.0
             simCellOccupier.strengthMultiplier = 2f;
         }
 
@@ -84,33 +93,5 @@ namespace Asphalt
             base.DoPostConfigureUnderConstruction(go);
             go.AddOrGet<KAnimGridTileVisualizer>();
         }
-
-        // This code is courtesy of CynicalBusiness
-        // Original proof of concept: https://lab.vevox.io/games/oxygen-not-included/matts-mods/blob/master/IndustrializationFundementals/Building/TileWoodConfig.cs
-        public static TextureAtlas GetCustomAtlas(string name, Type type, TextureAtlas tileAtlas)
-        {
-            var dir = Path.GetDirectoryName(type.Assembly.Location);
-            var texFile = Path.Combine(dir, name + ".png");
-
-            TextureAtlas atlas = null;
-
-            if (File.Exists(texFile))
-            {
-                var data = File.ReadAllBytes(texFile);
-                var tex = new Texture2D(2, 2);
-                tex.LoadImage(data);
-
-                atlas = ScriptableObject.CreateInstance<TextureAtlas>();
-                atlas.texture = tex;
-                atlas.vertexScale = tileAtlas.vertexScale;
-                atlas.items = tileAtlas.items;
-            }
-            else
-                Debug.LogError($"ASPHALT: Could not load atlas image at path {texFile}.");
-
-            return atlas;
-        }
-
-
     }
 }

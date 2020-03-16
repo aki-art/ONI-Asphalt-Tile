@@ -89,14 +89,19 @@
   <ItemGroup>
     <Compile Include="AsphaltConfig.cs" />
     <Compile Include="AsphaltPatches.cs" />
-    <Compile Include="CustomAssets.cs" />
+    <Compile Include="ModAssets.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="ModSettingsScreen.cs" />
     <Compile Include="NukePatches.cs" />
+    <Compile Include="Nuker.cs" />
     <Compile Include="NukeScreen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSettings.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
