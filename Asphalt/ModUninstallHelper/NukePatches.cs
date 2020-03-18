@@ -26,7 +26,7 @@ namespace Asphalt
                     return; 
                 }
 
-                Transform parent = UIHelper.GetACanvas().transform;
+                Transform parent = UIHelper.GetACanvas("AsphaltNuke").transform;
                 GameObject nukeScreen = UnityEngine.Object.Instantiate(ModAssets.Prefabs.nukeScreenPrefab.gameObject, parent);
                 NukeScreen nukeScreenComponent = nukeScreen.AddComponent<NukeScreen>();
                 nukeScreenComponent.ShowDialog();

@@ -15,6 +15,7 @@ namespace Asphalt
         {
             public static void OnLoad(string path)
             {
+                SettingsManager.Initialize();
                 Log.Info("Loaded Asphalt Tiles version " + typeof(Log).Assembly.GetName().Version.ToString());
                 ModPath = path;
                 ModAssets.LoadAll();
@@ -67,7 +68,7 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go)
             {
-                if (UserSettings.BitumenProduction)
+                if (SettingsManager.Settings.DisableBitumenProduction)
                 {
                     ElementDropper elementDropper = go.AddComponent<ElementDropper>();
                     elementDropper.emitMass = 100f;
@@ -164,14 +165,16 @@ namespace Asphalt
         [HarmonyPatch(typeof(ModsScreen), "BuildDisplay")]
         public static class ModsScreen_BuildDisplay_Patch
         {
-            public static void Postfix(List<DisplayedMod> ___displayedMods, ModsScreen __instance)
+            public static void Postfix(object ___displayedMods, ModsScreen __instance)
             {
-                foreach (var modEntry in ___displayedMods)
+                foreach (var modEntry in (IEnumerable)___displayedMods)
                 {
-                    Mod mod = Global.Instance.modManager.mods[modEntry.mod_index];
-                    if (modEntry.mod_index >= 0 && mod.file_source.GetRoot() == ModPath)
+                    int index = Traverse.Create(modEntry).Field("mod_index").GetValue<int>();
+
+                    Mod mod = Global.Instance.modManager.mods[index];
+                    if (index >= 0 && mod.file_source.GetRoot() == ModPath)
                     {
-                        Transform transform = modEntry.rect_transform;
+                        Transform transform = Traverse.Create(modEntry).Field("rect_transform").GetValue<RectTransform>();
                         if (transform != null)
                         {
                             KButton subButton = null;
@@ -206,18 +209,11 @@ namespace Asphalt
                     return;
                 }
 
-                Transform parent = UIHelper.GetACanvas().transform;
+                Transform parent = UIHelper.GetACanvas("AsphaltModSettings").transform;
                 GameObject settingsScreen = UnityEngine.Object.Instantiate(ModAssets.Prefabs.modSettingsScreenPrefab.gameObject, parent);
                 ModSettingsScreen settingsScreenComponent = settingsScreen.AddComponent<ModSettingsScreen>();
                 settingsScreenComponent.ShowDialog();
             }
-        }
-
-        // This is a mirror struct of a struct of the same name from ModsScreen.cs
-        public struct DisplayedMod
-        {
-            public RectTransform rect_transform;
-            public int mod_index;
         }
 
     }

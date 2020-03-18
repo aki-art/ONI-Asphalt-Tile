@@ -90,6 +90,8 @@
     <Compile Include="AsphaltConfig.cs" />
     <Compile Include="AsphaltPatches.cs" />
     <Compile Include="FUI\FButton.cs" />
+    <Compile Include="FUI\FHSVColorSelector.cs" />
+    <Compile Include="FUI\FSpeedSlider.cs" />
     <Compile Include="ModAssets.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="FUI\UIHelper.cs" />

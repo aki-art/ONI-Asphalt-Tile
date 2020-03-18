@@ -8,11 +8,11 @@ namespace Asphalt
     public class UserSettings : MonoBehaviour
     {
         [JsonProperty]
-        public bool BitumenProduction { get; set; } = true;
+        public bool DisableBitumenProduction { get; set; } = false;
         [JsonProperty]
         public float SpeedMultiplier { get; set; } = 2.0f;
         [JsonProperty]
-        public bool NukeAsphaltTiles { get; set; } = true;
+        public bool NukeAsphaltTiles { get; set; } = false;
         [JsonProperty]
         public bool UseLocalFolder { get; set; } = false; // not in UI
     }

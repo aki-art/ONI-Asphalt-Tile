@@ -11,9 +11,9 @@ namespace Asphalt
 
     class UIHelper
     {
-        public static ToolTip AddSimpleToolTip(GameObject go, string message, bool center = false)
+        public static ToolTip AddSimpleToolTip(GameObject gameObject, string message, bool center = false)
         {
-            ToolTip toolTip = go.AddComponent<ToolTip>();
+            ToolTip toolTip = gameObject.AddComponent<ToolTip>();
             if(center)
             {
                 toolTip.tooltipPivot = new Vector2(0.5f, 0f);
@@ -56,7 +56,7 @@ namespace Asphalt
             }
         }
 
-        public static Canvas GetACanvas()
+        public static Canvas GetACanvas(string name)
         {
             GameObject parent;
             if (FrontEndManager.Instance != null)
@@ -72,7 +72,7 @@ namespace Asphalt
                 else
                 {
                     parent = new GameObject();
-                    parent.name = "FileErrorCanvas";
+                    parent.name = name + "Canvas";
                     UnityEngine.Object.DontDestroyOnLoad(parent);
                     Canvas canvas = parent.AddComponent<Canvas>();
                     canvas.renderMode = RenderMode.ScreenSpaceOverlay;

@@ -26,9 +26,13 @@ namespace Asphalt
         [SerializeField]
         private GameObject whatsNewLabel;
         [SerializeField]
+        private GameObject saveLocationToggle;
+        [SerializeField]
         private GameObject authorNote;
         [SerializeField]
         private GameObject speedSlider;
+        [SerializeField]
+        private GameObject colorSelector;
 
         protected override void OnPrefabInit()
         {
@@ -44,21 +48,23 @@ namespace Asphalt
             steamButton = gameObject.transform.Find("SteamButton").gameObject;
             versionLabel = gameObject.transform.Find("VersionLabel").gameObject;
             authorNote = gameObject.transform.Find("AuthorNote").gameObject;
+            saveLocationToggle = gameObject.transform.Find("SaveLocationToggle").gameObject;
             whatsNewLabel = gameObject.transform.Find("VersionLabel/WhatsNew").gameObject;
             bitumenToggle = gameObject.transform.Find(path + "/TileSettingsPanel/TogglePanel/Toggle").GetComponent<Toggle>();
             speedSlider = gameObject.transform.Find(path + "/TileSettingsPanel/SliderPanel/Slider").gameObject;
             nukeToggle = gameObject.transform.Find(path + "/NukeSettingsPanel/TogglePanel/Toggle").GetComponent<Toggle>();
+            colorSelector = gameObject.transform.Find(path + "/AdvancedSettingsPanel/ColorPicker").gameObject;
 
             #endregion
 
             // set default values
-            bitumenToggle.isOn = UserSettings.BitumenProduction;
-            nukeToggle.isOn = UserSettings.NukeAsphaltTiles;
-            speedSlider.GetComponent<Slider>().value = UserSettings.SpeedMultiplier;
+            bitumenToggle.isOn = SettingsManager.Settings.DisableBitumenProduction;
+            nukeToggle.isOn = SettingsManager.Settings.NukeAsphaltTiles;
+            speedSlider.GetComponent<Slider>().value = SettingsManager.Settings.SpeedMultiplier;
 
-            authorNote.SetActive(!SettingsManager.IsThereAnOutsideConfig);
-            if (UserSettings.UseLocalFolder)
+            if (SettingsManager.Settings.UseLocalFolder)
             {
+                authorNote.SetActive(true);
                 authorNote.GetComponent<Text>().text = "Settings will be reset with game updates.";
                 UIHelper.AddSimpleToolTip(authorNote,
                     "When the game updates, since 2020 February all user files will be wiped in \n" +
@@ -66,7 +72,20 @@ namespace Asphalt
                     "side in the hidden configuration options, where it could not be reset. ");
             }
             else
-                authorNote.GetComponent<Text>().text = "Saving these settings will save a configuration file in <find path>";
+            {
+                if(!SettingsManager.IsThereAnOutsideConfig)
+                {
+                    saveLocationToggle.SetActive(true);
+                    string safeLocationInfo = "If <b>enabled</b>, this mod will save settings to\n " +
+                        SettingsManager.exteriorPath.Replace('\\', '/') + "/config.json\n" +
+                        "This will leave user settings to persist after mod uninstall, but won't ever reset.\n\n" +
+                        "If <b>disabled</b>, the settings will be saved at\n" +
+                        SettingsManager.localPath.Replace('\\', '/') + "/config.json\n" +
+                        "This will cause user settings to reset at <u>every</u> mod update (including this checkbox.)";
+
+                    UIHelper.AddSimpleToolTip(saveLocationToggle, safeLocationInfo, true);
+                }
+            }
 
             versionLabel.GetComponent<Text>().text = "v" + typeof(ModSettingsScreen).Assembly.GetName().Version.ToString();
 
@@ -91,7 +110,8 @@ namespace Asphalt
                 "- No longer using Plib\n " +
                 "- Cleaned up logging\n " +
                 "- Small performance improvement</color></size>";
-            var whatsNewTooltip = UIHelper.AddSimpleToolTip(whatsNewLabel.gameObject, whatsNewInfo, true);
+
+            UIHelper.AddSimpleToolTip(whatsNewLabel.gameObject, whatsNewInfo, true);
 
             ConsumeMouseScroll = true;
             activateOnSpawn = true;
@@ -120,22 +140,24 @@ namespace Asphalt
             var steamFButton = steamButton.AddComponent<FButton>();
             steamFButton.OnClick += OnClickSteam;
 
-            List<FSlider.Range> ranges = new List<FSlider.Range> {
-                new FSlider.Range(1f, 1f, "No bonus", Color.grey),
-                new FSlider.Range(1f, 1.25f, "Small bonus", Color.grey),
-                new FSlider.Range(1.25f, 1.25f, "Regular Tiles", Color.grey),
-                new FSlider.Range(1.25f, 1.5f, "Some bonus", Color.white),
-                new FSlider.Range(1.5f, 1.5f, "Metal tiles", Color.white),
-                new FSlider.Range(1f, 2f, "Fast", Color.white),
-                new FSlider.Range(2f, 2f, "Default", Color.white),
-                new FSlider.Range(2f, 3f, "GO FAST", new Color32(44, 44, 242, 255)),
-                new FSlider.Range(3f, 50f, "Light Speed", new Color32(183, 226, 13, 255)),
-                new FSlider.Range(50f, 1000f, "Ridiculous", new Color32(226, 93, 13, 255)),
-                new FSlider.Range(1000f, 1000f, "Ludicrous", new Color32(226, 23, 13, 255))
+            List<FSpeedSlider.Range> ranges = new List<FSpeedSlider.Range> {
+                new FSpeedSlider.Range(1f, 1f, "No bonus", Color.grey),
+                new FSpeedSlider.Range(1f, 1.25f, "Small bonus", Color.grey),
+                new FSpeedSlider.Range(1.25f, 1.25f, "Regular Tiles", Color.grey),
+                new FSpeedSlider.Range(1.25f, 1.5f, "Some bonus", Color.white),
+                new FSpeedSlider.Range(1.5f, 1.5f, "Metal tiles", Color.white),
+                new FSpeedSlider.Range(1f, 2f, "Fast", Color.white),
+                new FSpeedSlider.Range(2f, 2f, "Default", Color.white),
+                new FSpeedSlider.Range(2f, 3f, "GO FAST", new Color32(44, 44, 242, 255)),
+                new FSpeedSlider.Range(3f, 50f, "Light Speed", new Color32(183, 226, 13, 255)),
+                new FSpeedSlider.Range(50f, 1000f, "Ridiculous", new Color32(226, 93, 13, 255)),
+                new FSpeedSlider.Range(1000f, 1000f, "Ludicrous", new Color32(226, 23, 13, 255))
             };
 
-            var speedFSlider = speedSlider.AddComponent<FSlider>();
-            speedFSlider.ranges = ranges;
+            var speedFSpeedSlider = speedSlider.AddComponent<FSpeedSlider>();
+            speedFSpeedSlider.ranges = ranges;
+
+            colorSelector.AddComponent<FHSVColorSelector>();
         }
 
         #region Handling Input, Screen and Camera

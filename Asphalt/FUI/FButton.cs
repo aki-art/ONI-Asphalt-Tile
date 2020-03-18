@@ -2,6 +2,7 @@
 
 namespace Asphalt
 {
+    // expects to be attached to a Button gameObject
     public class FButton : KMonoBehaviour, IEventSystemHandler, IPointerDownHandler
     {
         public event System.Action OnClick;

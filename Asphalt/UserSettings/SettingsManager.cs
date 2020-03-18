@@ -8,15 +8,17 @@ namespace Asphalt
 {
     class SettingsManager
     {
-        private static readonly string localPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "config.json");
-        private static readonly string outsidePath;
+        public static string localPath;
+        public static string exteriorPath;
+        private const string FILE_NAME = "config.json";
+        private const string FOLDER = "settings/AsphaltTiles";
         public static UserSettings Settings { get; set; }
 
         public static bool IsThereAnOutsideConfig
         {
             get
             {
-                return File.Exists(outsidePath);
+                return File.Exists(exteriorPath);
             }
         }
 
@@ -28,53 +30,84 @@ namespace Asphalt
             }
         }
 
-        public void Initialize()
+        public static void Initialize()
         {
-            if(IsThereAnOutsideConfig)
-                Settings = LoadConfigFromFile(outsidePath);
-            else if(IsThereALocalConfig)
+            localPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            exteriorPath = GetDirectory();
+
+            Log.Debuglog("Config save folder in case of local: " + localPath);
+            Log.Debuglog("Config save folder in case of exterior: " + exteriorPath);
+
+            if (IsThereAnOutsideConfig)
+                Settings = LoadConfigFromFile(exteriorPath);
+            else if (IsThereALocalConfig)
                 Settings = LoadConfigFromFile(localPath);
-            // if neither exists, leave on defaults
+            else Settings = new UserSettings();
+            // Leave at defaults otherwise
 
             if (Settings.UseLocalFolder)
             {
-                if (IsThereALocalConfig) return;
-                if(IsThereAnOutsideConfig)
+                if (IsThereAnOutsideConfig)
                 {
-                    // move these settings inside;
+                    if (!IsThereALocalConfig)
+                    {
+                        Log.Info($"Removed settings file from {exteriorPath}, saving settings from now on at {localPath}");
+                        Directory.Delete(exteriorPath);
+                        WriteSettingsToFile(localPath);
+                    }
+                    else
+                    {
+                        Log.Info($"Removed settings file from {exteriorPath}. Local config file found.");
+                        Directory.Delete(exteriorPath);
+                    }
                 }
             }
         }
+        public static string GetDirectory()
+        {
+            return Path.Combine(Util.RootFolder(), FOLDER);
+        }
 
+        // Called from UI
+        public static void SaveSettings()
+        {
+            if (Settings.UseLocalFolder)
+                WriteSettingsToFile(localPath);
+            else
+                WriteSettingsToFile(exteriorPath);
+        }
 
-        /// <summary>
-        /// Writed every property in UserSettings into a JSON file
-        /// </summary>
+        // Write every property in UserSettings into a JSON file
         public static void WriteSettingsToFile(string path)
         {
+            var filePath = Path.Combine(path, FILE_NAME);
             try
             {
-                using (var sw = new StreamWriter(path))
+                if (!Directory.Exists(path) && path == exteriorPath)
+                    Directory.CreateDirectory(path);
+
+                using (var sw = new StreamWriter(filePath))
                 {
                     var serializedUserSettings = JsonConvert.SerializeObject(Settings, Formatting.Indented);
                     sw.Write(serializedUserSettings);
-                    Log.Info($"config writtern to: {path}");
+                    Log.Info($"Settings saved to: {filePath}");
                 }
             }
             catch (Exception e)
             {
-                Log.Warning($"Couldn't write to {path}, {e.Message}");
+                Log.Warning($"Couldn't write to {filePath}, {e.Message}");
             }
 
         }
 
         private static UserSettings LoadConfigFromFile(string path)
         {
-            Log.Info("Loading config files");
+            var filePath = Path.Combine(path, FILE_NAME);
+            Log.Debuglog("Loading config files from: " + filePath);
             UserSettings userSettings = new UserSettings();
-            try
+           /* try
             {
-                using (var r = new StreamReader(path))
+                using (var r = new StreamReader(filePath))
                 {
                     var json = r.ReadToEnd();
                     userSettings = JsonConvert.DeserializeObject<UserSettings>(json);
@@ -82,10 +115,10 @@ namespace Asphalt
             }
             catch (Exception e)
             {
-                Log.Error($"Error reading {Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}, {e.Message}");
+                Log.Error($"Error reading {filePath}, {e.Message}");
                 return null;
             }
-
+*/
             return userSettings;
         }
     }
