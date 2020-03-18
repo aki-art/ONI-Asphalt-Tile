@@ -29,6 +29,19 @@ namespace Asphalt
                 Warn(e);
             }
         }
+        public static void Debuglog(object arg)
+        {
+#if DEBUG
+            try
+            {
+               Debug.Log(prefix + arg.ToString());
+            }
+            catch (Exception e)
+            {
+                Warn(e);
+            }
+#endif
+        }
 
         public static void Error(object arg)
         {

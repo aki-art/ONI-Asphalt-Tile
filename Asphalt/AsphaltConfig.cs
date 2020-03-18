@@ -76,7 +76,7 @@ namespace Asphalt
 
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
             simCellOccupier.doReplaceElement = true;
-            simCellOccupier.movementSpeedMultiplier = UserSettings.Instance.SpeedMultiplier;  // Defaults to 2.0
+            simCellOccupier.movementSpeedMultiplier = 1000f;//UserSettings.SpeedMultiplier;  // Defaults to 2.0
             simCellOccupier.strengthMultiplier = 2f;
         }
 

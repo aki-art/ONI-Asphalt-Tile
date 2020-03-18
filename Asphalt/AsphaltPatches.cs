@@ -1,12 +1,9 @@
 ﻿using Harmony;
-using PeterHan.PLib;
-using PeterHan.PLib.Options;
+using KMod;
 using STRINGS;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using UnityEngine;
 
 namespace Asphalt
@@ -18,11 +15,8 @@ namespace Asphalt
         {
             public static void OnLoad(string path)
             {
+                Log.Info("Loaded Asphalt Tiles version " + typeof(Log).Assembly.GetName().Version.ToString());
                 ModPath = path;
-                PUtil.InitLibrary(true);
-                POptions.RegisterOptions(typeof(UserSettings));
-                POptions.ReadSettings<UserSettings>();
-
                 ModAssets.LoadAll();
             }
         }
@@ -59,9 +53,9 @@ namespace Asphalt
         {
             public static void Prefix()
             {
-                var techList = new List<string>(Database.Techs.TECH_GROUPING["ImprovedCombustion"]) 
-                { 
-                    AsphaltConfig.ID 
+                var techList = new List<string>(Database.Techs.TECH_GROUPING["ImprovedCombustion"])
+                {
+                    AsphaltConfig.ID
                 };
                 Database.Techs.TECH_GROUPING["ImprovedCombustion"] = techList.ToArray();
             }
@@ -73,7 +67,7 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go)
             {
-                if(UserSettings.Instance.BitumenProduction)
+                if (UserSettings.BitumenProduction)
                 {
                     ElementDropper elementDropper = go.AddComponent<ElementDropper>();
                     elementDropper.emitMass = 100f;
@@ -89,7 +83,7 @@ namespace Asphalt
                         useEntityTemperature: false,
                         storeOutput: true,
                         outputElementOffsetx: 0,
-                        outputElementOffsety: 1f );
+                        outputElementOffsety: 1f);
 
                     // Pushing it into the outputElements array
                     Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
@@ -117,7 +111,7 @@ namespace Asphalt
 
                 // Assigning appropiate tags
                 bitumen.materialCategory = CreateMaterialCategoryTag(phaseTag, GameTags.ManufacturedMaterial.ToString());      // This tag is for storage
-                bitumen.oreTags = new Tag[] { 
+                bitumen.oreTags = new Tag[] {
                     GameTags.ManufacturedMaterial,                // This tag is for the autosweeper
                     GameTags.BuildableAny,                        // This tag is for any building material category (Tempshift Plates, Wallpapers)
                     GameTags.Solid                                // This tag is for mod compatibilities
@@ -151,7 +145,8 @@ namespace Asphalt
 
                     bitumen.substance = bitumensubstance;
                 }
-                catch(Exception e) {
+                catch (Exception e)
+                {
                     Log.Error("Could not assign new material to Bitumen element: " + e);
                 }
             }
@@ -163,6 +158,66 @@ namespace Asphalt
                 return phaseTag;
 
             return TagManager.Create(materialCategoryField);
+        }
+
+        // Injecting the Settings Button
+        [HarmonyPatch(typeof(ModsScreen), "BuildDisplay")]
+        public static class ModsScreen_BuildDisplay_Patch
+        {
+            public static void Postfix(List<DisplayedMod> ___displayedMods, ModsScreen __instance)
+            {
+                foreach (var modEntry in ___displayedMods)
+                {
+                    Mod mod = Global.Instance.modManager.mods[modEntry.mod_index];
+                    if (modEntry.mod_index >= 0 && mod.file_source.GetRoot() == ModPath)
+                    {
+                        Transform transform = modEntry.rect_transform;
+                        if (transform != null)
+                        {
+                            KButton subButton = null;
+                            foreach (Transform child in transform)
+                            {
+                                if (child.gameObject.name == "ManageButton")
+                                    subButton = child.gameObject.GetComponent<KButton>();
+                            }
+
+                            GameObject dialogParent = transform.parent.parent.parent.gameObject;
+                            KButton configButton = UIHelper.MakeKButton(
+                                info: new UIHelper.ButtonInfo(
+                                    text: "Settings",
+                                    action: new System.Action(OpenModSettingsScreen),
+                                    font_size: 14),
+                                buttonPrefab: subButton.gameObject,
+                                parent: subButton.transform.parent.gameObject,
+                                index: subButton.transform.GetSiblingIndex() - 1);
+                        }
+                    }
+                }
+
+            }
+
+            private static void OpenModSettingsScreen()
+            {
+                //float scale = GameScreenManager.Instance.ssOverlayCanvas.GetComponent<KCanvasScaler>().GetCanvasScale();
+
+                if (ModAssets.Prefabs.modSettingsScreenPrefab == null)
+                {
+                    Log.Warning("Could not display UI: Mod Settings screen prefab is null");
+                    return;
+                }
+
+                Transform parent = UIHelper.GetACanvas().transform;
+                GameObject settingsScreen = UnityEngine.Object.Instantiate(ModAssets.Prefabs.modSettingsScreenPrefab.gameObject, parent);
+                ModSettingsScreen settingsScreenComponent = settingsScreen.AddComponent<ModSettingsScreen>();
+                settingsScreenComponent.ShowDialog();
+            }
+        }
+
+        // This is a mirror struct of a struct of the same name from ModsScreen.cs
+        public struct DisplayedMod
+        {
+            public RectTransform rect_transform;
+            public int mod_index;
         }
 
     }

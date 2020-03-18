@@ -37,7 +37,7 @@ namespace Asphalt
                 return;
             }
 
-            Prefabs.modSettingsScreenPrefab = AssetBundle.LoadAsset<GameObject>("SettingsCanvas");
+            Prefabs.modSettingsScreenPrefab = AssetBundle.LoadAsset<GameObject>("ModSettingsDialog");
             Prefabs.nukeScreenPrefab = AssetBundle.LoadAsset<GameObject>("NukeDialog");
         }
 
