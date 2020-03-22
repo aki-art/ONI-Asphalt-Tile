@@ -1,33 +1,38 @@
-﻿using UnityEngine;
+﻿using KMod;
+using STRINGS;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Asphalt
 {
     /* TODO
-     * - Localized text
-     * - Sounds
-     * - Scaling
-     */
+     * - Localization support  */
 
     class UIHelper
     {
-        public static ToolTip AddSimpleToolTip(GameObject gameObject, string message, bool center = false)
+        public static ToolTip AddSimpleToolTip(GameObject gameObject, string message, bool center = false, float wrapWidth = 0)
         {
             ToolTip toolTip = gameObject.AddComponent<ToolTip>();
-            if(center)
+            if (center)
             {
                 toolTip.tooltipPivot = new Vector2(0.5f, 0f);
                 toolTip.tooltipPositionOffset = new Vector2(0f, 20f);
                 toolTip.parentPositionAnchor = new Vector2(0.5f, 0.5f);
             }
-            else 
-            { 
+            else
+            {
                 toolTip.tooltipPivot = new Vector2(1f, 0f);
                 toolTip.tooltipPositionOffset = new Vector2(0f, 20f);
                 toolTip.parentPositionAnchor = new Vector2(0.5f, 0.5f);
             }
-            toolTip.SetSimpleTooltip(message);
 
+            if (wrapWidth > 0)
+            {
+                toolTip.WrapWidth = wrapWidth;
+                toolTip.SizingSetting = ToolTip.ToolTipSizeSetting.MaxWidthWrapContent;
+            }
+            ToolTipScreen.Instance.SetToolTip(toolTip);
+            toolTip.SetSimpleTooltip(message);
             return toolTip;
         }
 
@@ -71,9 +76,11 @@ namespace Asphalt
                 }
                 else
                 {
-                    parent = new GameObject();
-                    parent.name = name + "Canvas";
-                    UnityEngine.Object.DontDestroyOnLoad(parent);
+                    parent = new GameObject
+                    {
+                        name = name + "Canvas"
+                    };
+                    Object.DontDestroyOnLoad(parent);
                     Canvas canvas = parent.AddComponent<Canvas>();
                     canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                     canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1;
@@ -84,6 +91,5 @@ namespace Asphalt
 
             return parent.GetComponent<Canvas>();
         }
-
     }
 }

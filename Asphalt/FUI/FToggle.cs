@@ -2,18 +2,15 @@
 
 namespace Asphalt
 {
-    // Can be attached to any existing gameobject for a basic button behaviour
-    public class FButton : KMonoBehaviour, IEventSystemHandler, IPointerDownHandler, IPointerEnterHandler
+    // just for sound effects
+    class FToggle : KMonoBehaviour, IEventSystemHandler, IPointerDownHandler, IPointerEnterHandler
     {
-        public event System.Action OnClick;
-
         public void OnPointerDown(PointerEventData eventData)
         {
             if (KInputManager.isFocused)
             {
                 KInputManager.SetUserActive();
                 PlaySound(UISoundHelper.ClickOpen);
-                OnClick?.Invoke();
             }
         }
 

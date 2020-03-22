@@ -5,24 +5,17 @@ using UnityEngine;
 
 namespace Asphalt
 {
-    public static class Nuker
+    public class Nuker
     {
         private static readonly BuildingDef sandstoneDef = Assets.GetBuildingDef(TileConfig.ID);
         private static Notifier notifier;
 
-        /// <summary>
-        /// Spawns a single Sandstone tile
-        /// </summary>
         private static void SpawnSandstoneTile(int cell, Orientation buildingOrientation, Storage _, IList<Tag> selectedElements, float temperature)
         {
             sandstoneDef.Build(cell, buildingOrientation, null, selectedElements, temperature, false, GameClock.Instance.GetTime() + 1);
             World.Instance.blockTileRenderer.Rebuild(ObjectLayer.FoundationTile, cell);
         }
 
-        /// <summary>
-        /// Replaces a single tile
-        /// </summary>
-        /// <param name="building"></param>
         private static void ChangeTileToSandstone(BuildingComplete building)
         {
             // Save the asphalt tile-s information
@@ -40,12 +33,8 @@ namespace Asphalt
             objects_to_destroy.Add(building.gameObject);
             Util.KDestroyGameObject(building.gameObject);
             objects_to_destroy.Recycle();
-
         }
 
-        /// <summary>
-        /// Loops through all completed buildings, and replaces all tiles
-        /// </summary>
         public static void ChangeAllAsphaltToSandstoneTiles()
         {
             Log.Info("Changing tiles");
@@ -55,10 +44,7 @@ namespace Asphalt
                 foreach (BuildingComplete building in Components.BuildingCompletes)
                 {
                     if (building.name == AsphaltConfig.ID + "Complete")
-                    {
                         ChangeTileToSandstone(building);
-
-                    }
                 }
 
             }
@@ -72,15 +58,20 @@ namespace Asphalt
 
         public static void RemoveAllBitumenFromWorld(bool refund)
         {
+            if (Components.Pickupables == null) return;
+            Log.Info("Components not null");
             float amount = 0;
+
             foreach (Pickupable pickupable in Components.Pickupables)
             {
+                if(pickupable.PrimaryElement.Element == null) Log.Info("element is null");
                 if (pickupable.PrimaryElement.Element == ElementLoader.FindElementByHash(SimHashes.Bitumen))
                 {
-                    amount += pickupable.storage.Capacity() - pickupable.storage.RemainingCapacity();
-                    Log.Info($"Removed {pickupable.storage.capacityKg} Bitumen");
-                    PopFXManager.Instance.SpawnFX(PopFXManager.Instance.sprite_Negative, UI.SANDBOXTOOLS.CLEARFLOOR.DELETED, pickupable.transform);
-                    Util.KDestroyGameObject(pickupable.gameObject);
+                        //amount += pickupable.storage.Capacity() - pickupable.storage.RemainingCapacity();
+                        //Log.Info($"Removed {pickupable.storage.capacityKg} Bitumen from storages");
+                        amount += pickupable.TotalAmount;
+                        PopFXManager.Instance.SpawnFX(PopFXManager.Instance.sprite_Negative, UI.SANDBOXTOOLS.CLEARFLOOR.DELETED, pickupable.transform);
+                        Util.KDestroyGameObject(pickupable.gameObject);            
                 }
             }
 
@@ -120,16 +111,16 @@ namespace Asphalt
 
                 // Give a notification
                 var notification = new Notification(
-                    title: "Oil Refunded!", 
-                    type: NotificationType.Good, 
-                    group: HashedString.Invalid, 
-                    tooltip: null, 
-                    tooltip_data: null, 
-                    expires: true, 
-                    delay: 0f, 
-                    custom_click_callback: null, 
-                    custom_click_data: null, 
-                    click_focus: result.transform );
+                    title: "Oil Refunded!",
+                    type: NotificationType.Good,
+                    group: HashedString.Invalid,
+                    tooltip: null,
+                    tooltip_data: null,
+                    expires: true,
+                    delay: 0f,
+                    custom_click_callback: null,
+                    custom_click_data: null,
+                    click_focus: result.transform);
 
                 notifier = result.gameObject.AddComponent<Notifier>();
                 notifier.Add(notification);
@@ -144,5 +135,6 @@ namespace Asphalt
             }
             Log.Info("Rebuilt Tiles.");
         }
+
     }
 }

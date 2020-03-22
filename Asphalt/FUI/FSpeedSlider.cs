@@ -1,28 +1,98 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Asphalt
 {
-    public class FSpeedSlider : KMonoBehaviour, IEventSystemHandler, IDragHandler
+    public class FSpeedSlider : KMonoBehaviour, IEventSystemHandler
     {
-        public event System.Action OnChange;
-        private Text speedMultiplerLabel;
         private const string SPEED_MULTIPLIER_PREFIX = "Speed bonus: ";
+
+        private Text speedMultiplerLabel;
         private Text speedRangeLabel;
+
         public List<Range> ranges;
-        private Slider slider;
-        private bool maxed = false;
+
+        private FSlider fSlider;
         Sprite plaidSprite;
+        Image backgroundImage;
         Color weirdPink;
 
+        protected override void OnPrefabInit()
+        {
+            base.OnPrefabInit();
+
+            #region  set object references
+            fSlider = gameObject.AddComponent<FSlider>();
+            speedMultiplerLabel = transform.Find("SliderLabel").GetComponent<Text>();
+            speedRangeLabel = transform.Find("SliderRangeLabel").GetComponent<Text>();
+            backgroundImage = transform.Find("Fill Area/Fill").GetComponent<Image>();
+            plaidSprite = backgroundImage.sprite;
+            weirdPink = backgroundImage.color;
+            #endregion
+
+            fSlider.OnChange += UpdateLabels;
+            backgroundImage.color = weirdPink;
+            backgroundImage.sprite = null;
+            UpdateLabels();
+        }
+
+        public void AssignRanges(List<Range> rangeList)
+        {
+            ranges = rangeList;
+            UpdateLabels();
+        }
+
+        public void SetValue(float val)
+        {
+            fSlider.Value = val;
+            UpdateLabels();
+        }
+
+        public void UpdateLabels()
+        {
+            float val = MapValue();
+            speedMultiplerLabel.text = SPEED_MULTIPLIER_PREFIX + val.ToString() + "x";
+
+            if (fSlider.slider.value < fSlider.slider.maxValue)
+            {
+                backgroundImage.color = weirdPink;
+                backgroundImage.sprite = null;
+            }
+            else
+            {
+                backgroundImage.color = Color.white;
+                backgroundImage.sprite = plaidSprite;
+            }
+
+            UpdateRange(val);
+
+        }
+
+        private void UpdateRange(float val)
+        {
+            if (ranges != null && ranges.Count > 0)
+            {
+                Log.Info("Checking: " + val);
+                var currentRange = ranges.FirstOrDefault(r => r.min <= val);
+                if(currentRange.name != null)
+                {
+                    Log.Info(currentRange.name);
+                    speedRangeLabel.text = currentRange.name;
+                    speedRangeLabel.color = currentRange.color;
+                }
+            }
+            else Log.Info("no ranges defined");
+        }
+
+
         // Thanks for Asquaredπ and Peter Han for help with the math
-        private float MapValue()
+        private float MapValue(float val)
         {
             float actualValue;
-            float val = slider.value;
             if (val < .66f) // on the first 2 thirds of the slider, we get a linear scale from 1-2.95
                 actualValue = 3f * val + 1;
             else if (val == 0.66f) // it just skips between 2.95 and 3.05 (rounded) without hardcoding this one value
@@ -35,84 +105,13 @@ namespace Asphalt
 
             return actualValue;
         }
-        protected override void OnPrefabInit()
-        {
-            base.OnPrefabInit();
-            slider = gameObject.GetComponent<Slider>();
-            speedMultiplerLabel = transform.Find("SliderLabel").GetComponent<Text>();
-            speedRangeLabel = transform.Find("SliderRangeLabel").GetComponent<Text>();
-            Image image = transform.Find("Fill Area/Fill").GetComponent<Image>();
-            plaidSprite = image.sprite;
-            weirdPink = image.color;
-            SetPlaid(false);
 
+        private float MapValue()
+        {
+            float val = fSlider.Value;
+            return MapValue(val);
         }
 
-        // this is a little lazy but it works™️
-        public void OnDrag(PointerEventData eventData)
-        {
-            if (KInputManager.isFocused)
-            {
-                KInputManager.SetUserActive();
-                UpdateLabels();
-                OnChange?.Invoke();
-            }
-        }
-
-        public void AssignRanges(List<Range> rangeList)
-        {
-            ranges = rangeList;
-            UpdateLabels();
-        }
-
-        public void UpdateLabels()
-        {
-            float val = MapValue();
-            speedMultiplerLabel.text = SPEED_MULTIPLIER_PREFIX + val.ToString() + "x";
-
-            var currentRange = GetCurrentRange(val);
-            speedRangeLabel.text = currentRange.name;
-            speedRangeLabel.color = currentRange.color;
-
-            // sets a plaid texture if the slider is maxed
-            if (slider.value == slider.maxValue && !maxed)
-                SetPlaid(true);
-            else if (slider.value != slider.maxValue && maxed)
-                SetPlaid(false);
-
-        }
-
-        private void SetPlaid(bool plaid)
-        {
-            maxed = plaid;
-            Image image = transform.Find("Fill Area/Fill").GetComponent<Image>();
-
-            if (plaid)
-            {
-                image.color = Color.white;
-                image.sprite = plaidSprite;
-            }
-            else
-            {
-                image.color = weirdPink;
-                image.sprite = null;
-            }
-        }
-
-        private Range GetCurrentRange(float val)
-        {
-            if (ranges.Count > 0 && slider != null)
-            {
-                foreach (Range range in ranges)
-                {
-                    if (val >= range.min && val <= range.max)
-                    {
-                        return range;
-                    }
-                }
-            }
-            return new Range(-1, -1, "n/a", Color.white);
-        }
         public struct Range
         {
             public float min;
@@ -129,6 +128,7 @@ namespace Asphalt
                 color = rangeColor;
             }
         }
+
 
     }
 

@@ -9,30 +9,28 @@ namespace Asphalt
         private bool shown = false;
         public bool pause = true;
         public const float SCREEN_SORT_KEY = 300f;
-        public System.Action onDeactivateCB;
 
-        Toggle bitumenToggle;
-        Toggle nukeToggle;
-        [SerializeField]
-        private GameObject cancelButton;
-        [SerializeField]
-        private GameObject confirmButton;
-        [SerializeField]
-        private GameObject githubButton;
-        [SerializeField]
-        private GameObject steamButton;
-        [SerializeField]
-        private GameObject versionLabel;
-        [SerializeField]
-        private GameObject whatsNewLabel;
-        [SerializeField]
-        private GameObject saveLocationToggle;
-        [SerializeField]
-        private GameObject authorNote;
-        [SerializeField]
-        private GameObject speedSlider;
-        [SerializeField]
-        private GameObject colorSelector;
+        private Toggle bitumenToggle;
+        private Toggle nukeToggle;
+        private Toggle safeLocationToggle;
+
+        private FButton cancelButton;
+        private FButton confirmButton;
+        private FButton githubButton;
+        private FButton steamButton;
+
+        private Text versionLabel;
+        private Text whatsNewLabel;
+        private Text authorNote;
+
+        private FSpeedSlider speedSlider;
+
+        private FHSVColorSelector colorSelector;
+
+        private FAccordion accordionControl;
+        private GameObject advancedSettingsAccordion;
+
+        private List<FSpeedSlider.Range> speedSliderRanges;
 
         protected override void OnPrefabInit()
         {
@@ -42,67 +40,50 @@ namespace Asphalt
 
             // This would be handled by Unity normally via Unity magic
             string path = "ScrollView/Viewport/Content/Panel";
-            cancelButton = gameObject.transform.Find("CancelButton").gameObject;
-            confirmButton = gameObject.transform.Find("OKButton").gameObject;
-            githubButton = gameObject.transform.Find("GithubButton").gameObject;
-            steamButton = gameObject.transform.Find("SteamButton").gameObject;
-            versionLabel = gameObject.transform.Find("VersionLabel").gameObject;
-            authorNote = gameObject.transform.Find("AuthorNote").gameObject;
-            saveLocationToggle = gameObject.transform.Find("SaveLocationToggle").gameObject;
-            whatsNewLabel = gameObject.transform.Find("VersionLabel/WhatsNew").gameObject;
+
+            cancelButton = gameObject.transform.Find("CancelButton").gameObject.AddComponent<FButton>();
+            confirmButton = gameObject.transform.Find("OKButton").gameObject.AddComponent<FButton>();
+            githubButton = gameObject.transform.Find("GithubButton").gameObject.AddComponent<FButton>();
+            steamButton = gameObject.transform.Find("SteamButton").gameObject.AddComponent<FButton>();
+
+            versionLabel = gameObject.transform.Find("VersionLabel").gameObject.GetComponent<Text>();
+            authorNote = gameObject.transform.Find("AuthorNote").gameObject.GetComponent<Text>();
+
+            whatsNewLabel = gameObject.transform.Find("VersionLabel/WhatsNew").gameObject.GetComponent<Text>();
             bitumenToggle = gameObject.transform.Find(path + "/TileSettingsPanel/TogglePanel/Toggle").GetComponent<Toggle>();
-            speedSlider = gameObject.transform.Find(path + "/TileSettingsPanel/SliderPanel/Slider").gameObject;
+            speedSlider = gameObject.transform.Find(path + "/TileSettingsPanel/SliderPanel/Slider").gameObject.AddComponent<FSpeedSlider>();
             nukeToggle = gameObject.transform.Find(path + "/NukeSettingsPanel/TogglePanel/Toggle").GetComponent<Toggle>();
-            colorSelector = gameObject.transform.Find(path + "/AdvancedSettingsPanel/ColorPicker").gameObject;
+
+            colorSelector = gameObject.transform.Find(path + "/AdvancedSettingsAccordion/AdvancedSettingsPanel/ColorPicker").gameObject.AddComponent<FHSVColorSelector>();
+
+            accordionControl = gameObject.transform.Find(path + "/AccordionController").gameObject.AddComponent<FAccordion>();
+            advancedSettingsAccordion = gameObject.transform.Find(path + "/AdvancedSettingsAccordion").gameObject;
+            safeLocationToggle = gameObject.transform.Find(path + "/AdvancedSettingsAccordion/AdvancedSettingsPanel/TogglePanel/Toggle").GetComponent<Toggle>();
+
+            bitumenToggle.gameObject.AddComponent<FToggle>();
+            nukeToggle.gameObject.AddComponent<FToggle>();
+            safeLocationToggle.gameObject.AddComponent<FToggle>();
 
             #endregion
 
-            // set default values
-            bitumenToggle.isOn = SettingsManager.Settings.DisableBitumenProduction;
-            nukeToggle.isOn = SettingsManager.Settings.NukeAsphaltTiles;
-            speedSlider.GetComponent<Slider>().value = SettingsManager.Settings.SpeedMultiplier;
-
             if (SettingsManager.Settings.UseLocalFolder)
             {
-                authorNote.SetActive(true);
+                authorNote.gameObject.SetActive(true);
                 authorNote.GetComponent<Text>().text = "Settings will be reset with game updates.";
-                UIHelper.AddSimpleToolTip(authorNote,
-                    "When the game updates, since 2020 February all user files will be wiped in \n" +
-                    "the mod folder. It seems you turned off permissions for this mod to save out-\n" +
-                    "side in the hidden configuration options, where it could not be reset. ");
-            }
-            else
-            {
-                if(!SettingsManager.IsThereAnOutsideConfig)
-                {
-                    saveLocationToggle.SetActive(true);
-                    string safeLocationInfo = "If <b>enabled</b>, this mod will save settings to\n " +
-                        SettingsManager.exteriorPath.Replace('\\', '/') + "/config.json\n" +
-                        "This will leave user settings to persist after mod uninstall, but won't ever reset.\n\n" +
-                        "If <b>disabled</b>, the settings will be saved at\n" +
-                        SettingsManager.localPath.Replace('\\', '/') + "/config.json\n" +
-                        "This will cause user settings to reset at <u>every</u> mod update (including this checkbox.)";
-
-                    UIHelper.AddSimpleToolTip(saveLocationToggle, safeLocationInfo, true);
-                }
+                UIHelper.AddSimpleToolTip(authorNote.gameObject,
+                    "When the game updates, since 2020 February all user files will be wiped in the mod folder. It seems you turned off permissions for this mod to save outside in the hidden configuration options, where it could not be reset. ", false, 400f);
             }
 
             versionLabel.GetComponent<Text>().text = "v" + typeof(ModSettingsScreen).Assembly.GetName().Version.ToString();
 
+            // TODO: figure out something better for this
             string whatsNewInfo = "<size=13><b>Version 1.1.0.0 Update</b>\n\n- " +
                 "Auto Sweepers and Sweepy can now pick up Bitumen.\n " +
-                "- Hatches can eat Bitumen (Base Hatch food, nothing fancy, it's just something to do\n " +
-                "  with the excess bitumen)\n " +
+                "- Hatches can eat Bitumen (Base Hatch food, nothing fancy, it's just something to do with the excess bitumen)\n " +
                 "- Bitumen can now be used to build Tempshift Plates and Wallpapers (dark slate grey)\n " +
                 "- New Mod settings UI\n " +
-                "- New option: Nuke mod.Replace asphalt tiles with regular (sandstone) tiles on the next\n " +
-                "  World load. Useful if you plan to uninstall the mod permanently.\n " +
-                "   <color=#9D9D9D>- This option will only apply once and then disable itself. If you\n " +
-                "     don't use this, the missing asphalt will just leave regular 200kg deposits of solid\n " +
-                "     vanilla bitumen behind, which isn't the end of the world, but as vanilla bitumen\n " +
-                "     cannot be stored it may cause unwanted unsweepable clutter.\n " +
-                "   - Option to remove all bitumen from world, which can greatly reduce useless clutter\n " +
-                "     once the mod is gone.\n " +
+                "- New option: Nuke mod.Replace asphalt tiles with regular (sandstone) tiles on the next World load. Useful if you plan to uninstall the mod permanently.\n  <color=#9D9D9D>- This option will only apply once and then disable itself. If you don't use this, the missing asphalt will just leave regular 200kg deposits of solid vanilla bitumen behind, which isn't the end of the world, but as vanilla bitumen cannot be stored it may cause unwanted unsweepable clutter.\n " +
+                "   - Option to remove all bitumen from world, which can greatly reduce useless clutter once the mod is gone.\n " +
                 "       - Option to refund some Oil if you feel you lost out on resources.\n " +
                 "   - If you just want to reinstall the mod, do not use this option.</color>\n " +
                 "- Changing the mod settings no longer requires restart\n " +
@@ -111,54 +92,58 @@ namespace Asphalt
                 "- Cleaned up logging\n " +
                 "- Small performance improvement</color></size>";
 
-            UIHelper.AddSimpleToolTip(whatsNewLabel.gameObject, whatsNewInfo, true);
+            UIHelper.AddSimpleToolTip(whatsNewLabel.gameObject, whatsNewInfo, true, 400f);
+
+            speedSliderRanges = new List<FSpeedSlider.Range> {
+                new FSpeedSlider.Range(1f, 1.05f, "No bonus", Color.grey),
+                new FSpeedSlider.Range(1.05f, 1.2f, "Small bonus", Color.grey),
+                new FSpeedSlider.Range(1.25f, 1.25f, "Regular Tiles", Color.white),
+                new FSpeedSlider.Range(1.3f, 1.5f, "Some bonus", Color.white),
+                new FSpeedSlider.Range(1.5f, 1.5f, "Metal tiles", Color.white),
+                new FSpeedSlider.Range(1.55f, 1.95f, "Fast", Color.white),
+                new FSpeedSlider.Range(2f, 2f, "Default", Color.white),
+                new FSpeedSlider.Range(2.05f, 3f, "GO FAST", new Color32(55, 168, 255, 255)),
+                new FSpeedSlider.Range(3f, 50f, "Light Speed", new Color32(183, 226, 13, 255)),
+                new FSpeedSlider.Range(50f, 999.95f, "Ridiculous", new Color32(226, 93, 13, 255)),
+                new FSpeedSlider.Range(999.95f, 1000f, "Ludicrous", new Color32(226, 23, 13, 255))
+            };
+
+            SetSettings(SettingsManager.Settings);
 
             ConsumeMouseScroll = true;
             activateOnSpawn = true;
             gameObject.SetActive(true);
         }
 
+
         public void ShowDialog()
         {
-            Log.Debuglog("Showing Dialog");
             if (transform.parent.GetComponent<Canvas>() == null && transform.parent.parent != null)
-            {
                 transform.SetParent(transform.parent.parent);
-            }
             transform.SetAsLastSibling();
 
-            var cancelFButton = cancelButton.AddComponent<FButton>();
-            cancelFButton.OnClick += OnClickCancel;
-            UIHelper.AddSimpleToolTip(cancelButton, "Test tooltip\nmore tests ");
+            // Buttons
+            cancelButton.OnClick += OnClickCancel;
+            confirmButton.OnClick += OnClickApply;
+            githubButton.OnClick += OnClickGithub;
+            steamButton.OnClick += OnClickSteam;
 
-            var confirmFButton = confirmButton.AddComponent<FButton>();
-            confirmFButton.OnClick += OnClickApply;
+            UIHelper.AddSimpleToolTip(githubButton.gameObject, "Open Asphalt Tiles on Github");
+            UIHelper.AddSimpleToolTip(steamButton.gameObject, "Open Asphalt Tiles on Steam");
 
-            var githubFButton = githubButton.AddComponent<FButton>();
-            githubFButton.OnClick += OnClickGithub;
+            // Tile Settings
+            speedSlider.SetValue(SettingsManager.Settings.SpeedMultiplier);
+            speedSlider.AssignRanges(speedSliderRanges);
 
-            var steamFButton = steamButton.AddComponent<FButton>();
-            steamFButton.OnClick += OnClickSteam;
+            // Nuke Settings
+            nukeToggle.isOn = SettingsManager.TempSettings.NukeAsphaltTiles;
 
-            List<FSpeedSlider.Range> ranges = new List<FSpeedSlider.Range> {
-                new FSpeedSlider.Range(1f, 1f, "No bonus", Color.grey),
-                new FSpeedSlider.Range(1f, 1.25f, "Small bonus", Color.grey),
-                new FSpeedSlider.Range(1.25f, 1.25f, "Regular Tiles", Color.grey),
-                new FSpeedSlider.Range(1.25f, 1.5f, "Some bonus", Color.white),
-                new FSpeedSlider.Range(1.5f, 1.5f, "Metal tiles", Color.white),
-                new FSpeedSlider.Range(1f, 2f, "Fast", Color.white),
-                new FSpeedSlider.Range(2f, 2f, "Default", Color.white),
-                new FSpeedSlider.Range(2f, 3f, "GO FAST", new Color32(44, 44, 242, 255)),
-                new FSpeedSlider.Range(3f, 50f, "Light Speed", new Color32(183, 226, 13, 255)),
-                new FSpeedSlider.Range(50f, 1000f, "Ridiculous", new Color32(226, 93, 13, 255)),
-                new FSpeedSlider.Range(1000f, 1000f, "Ludicrous", new Color32(226, 23, 13, 255))
-            };
-
-            var speedFSpeedSlider = speedSlider.AddComponent<FSpeedSlider>();
-            speedFSpeedSlider.ranges = ranges;
-
-            colorSelector.AddComponent<FHSVColorSelector>();
+            // Advanced Settings
+            accordionControl.SetTarget(advancedSettingsAccordion, 168f, false);
+            var colorSelectorLabel = colorSelector.transform.Find("SliderLabel").gameObject;
+            UIHelper.AddSimpleToolTip(colorSelectorLabel, "Sets element color for bitumen.\nThis will show up for wallpapers or painted walls. \n\nRequires restart.");
         }
+
 
         #region Handling Input, Screen and Camera
         protected override void OnCmpEnable()
@@ -197,7 +182,6 @@ namespace Asphalt
 
         protected override void OnDeactivate()
         {
-            onDeactivateCB?.Invoke();
             OnShow(false);
         }
 
@@ -247,8 +231,35 @@ namespace Asphalt
         }
         #endregion
 
+        private void SetSettings(UserSettings values)
+        {
+            bitumenToggle.isOn = values.DisableBitumenProduction;
+            speedSlider.SetValue(values.SpeedMultiplier);
+            safeLocationToggle.isOn = values.UseLocalFolder;
+            colorSelector.SetColorFromHex(values.BitumenColor);
+        }
+
         public void OnClickApply()
         {
+            float speedSlideValue = speedSlider.GetComponent<Slider>().value;
+
+            // Immediate effects
+
+            ElementLoader.FindElementByHash(SimHashes.Bitumen).substance.uiColour = colorSelector.color;
+            ElementLoader.FindElementByHash(SimHashes.Bitumen).substance.colour = colorSelector.color;
+            ElementLoader.FindElementByHash(SimHashes.Bitumen).substance.conduitColour = colorSelector.color;
+
+            SettingsManager.TempSettings.UpdateMovementMultiplierRunTime = (SettingsManager.Settings.SpeedMultiplier != speedSlideValue);
+            SettingsManager.TempSettings.NukeAsphaltTiles = nukeToggle.isOn;
+
+            // Saving configuration
+            SettingsManager.Settings.DisableBitumenProduction = bitumenToggle.isOn;
+            SettingsManager.Settings.SpeedMultiplier = speedSlideValue;
+            SettingsManager.Settings.UseLocalFolder = safeLocationToggle.isOn;
+            SettingsManager.Settings.BitumenColor = colorSelector.GetHexValue();
+
+            SettingsManager.SaveSettings();
+
             Deactivate();
         }
 
@@ -264,7 +275,5 @@ namespace Asphalt
         {
             Application.OpenURL("https://steamcommunity.com/sharedfiles/filedetails/?id=1979475408");
         }
-
     }
 }
-

@@ -89,26 +89,30 @@
   <ItemGroup>
     <Compile Include="AsphaltConfig.cs" />
     <Compile Include="AsphaltPatches.cs" />
+    <Compile Include="FUI\FNumberInputField.cs" />
+    <Compile Include="FUI\FAccordion.cs" />
     <Compile Include="FUI\FButton.cs" />
     <Compile Include="FUI\FHSVColorSelector.cs" />
+    <Compile Include="FUI\FInputField.cs" />
     <Compile Include="FUI\FSpeedSlider.cs" />
+    <Compile Include="FUI\FToggle.cs" />
+    <Compile Include="FUI\UISoundHelper.cs" />
     <Compile Include="ModAssets.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="FUI\UIHelper.cs" />
     <Compile Include="FUI\FCycle.cs" />
     <Compile Include="FUI\FSlider.cs" />
+    <Compile Include="UserSettings\CloneExtension.cs" />
     <Compile Include="UserSettings\ModSettingsScreen.cs" />
     <Compile Include="ModUninstallHelper\NukePatches.cs" />
     <Compile Include="ModUninstallHelper\Nuker.cs" />
     <Compile Include="ModUninstallHelper\NukeScreen.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserSettings\SettingsManager.cs" />
+    <Compile Include="UserSettings\TempSettings.cs" />
     <Compile Include="UserSettings\UserSettings.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\.editorconfig">
-      <Link>.editorconfig</Link>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

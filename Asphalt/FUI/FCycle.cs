@@ -7,11 +7,15 @@ namespace Asphalt
     public class FCycle : KMonoBehaviour
     {
         public event System.Action OnChange;
-        private GameObject leftArrow;
-        private GameObject rightArrow;
+
+        private FButton leftArrow;
+        private FButton rightArrow;
+
         private Text label;
         private Text description;
+
         private int currentIndex = 0;
+
         private bool HasOptions
         {
             get
@@ -24,16 +28,16 @@ namespace Asphalt
 
         protected override void OnPrefabInit()
         {
-            leftArrow = transform.Find("CycleSelector/LightShapeLeftButton").gameObject;
-            var leftArrowFButton = leftArrow.AddComponent<FButton>();
-            leftArrowFButton.OnClick += CycleLeft;
-
-            rightArrow = transform.Find("CycleSelector/LightShapeRightButton").gameObject;
-            var rightArrowFButton = rightArrow.AddComponent<FButton>();
-            rightArrowFButton.OnClick += CycleRight;
-
+            #region setting object references
+            leftArrow = transform.Find("CycleSelector/LightShapeLeftButton").gameObject.AddComponent<FButton>();
+            rightArrow = transform.Find("CycleSelector/LightShapeRightButton").gameObject.AddComponent<FButton>();
             label = transform.Find("CycleSelector").GetComponent<Text>();
             description = transform.Find("Note").GetComponent<Text>();
+            #endregion
+
+            leftArrow.OnClick += CycleLeft;
+            rightArrow.OnClick += CycleRight;
+
         }
         public void CycleLeft()
         {

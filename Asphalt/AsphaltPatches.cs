@@ -15,8 +15,8 @@ namespace Asphalt
         {
             public static void OnLoad(string path)
             {
-                SettingsManager.Initialize();
                 Log.Info("Loaded Asphalt Tiles version " + typeof(Log).Assembly.GetName().Version.ToString());
+                SettingsManager.Initialize();
                 ModPath = path;
                 ModAssets.LoadAll();
             }
@@ -48,6 +48,7 @@ namespace Asphalt
             }
         }
 
+
         // Adding Asphalt tiles to the research tree.
         [HarmonyPatch(typeof(Db), "Initialize")]
         public static class Db_Initialize_Patch
@@ -58,7 +59,12 @@ namespace Asphalt
                 {
                     AsphaltConfig.ID
                 };
+
                 Database.Techs.TECH_GROUPING["ImprovedCombustion"] = techList.ToArray();
+
+                // Translation support not yet added, but planned for future
+                // Localization.RegisterForTranslation(typeof(ASPHALT_MOD));
+                // Localization.GenerateStringsTemplate(typeof(ASPHALT_MOD), Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
             }
         }
 
@@ -68,7 +74,7 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go)
             {
-                if (SettingsManager.Settings.DisableBitumenProduction)
+                if (!SettingsManager.Settings.DisableBitumenProduction)
                 {
                     ElementDropper elementDropper = go.AddComponent<ElementDropper>();
                     elementDropper.emitMass = 100f;
@@ -86,20 +92,19 @@ namespace Asphalt
                         outputElementOffsetx: 0,
                         outputElementOffsety: 1f);
 
-                    // Pushing it into the outputElements array
                     Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
                     elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
                 }
             }
         }
 
-        // Fixing up bitumen
+        // Fixing up bitumens looks
         [HarmonyPatch(typeof(ElementLoader), "Load")]
         private static class Patch_ElementLoader_Load
         {
             private static SubstanceTable subTable;
 
-            private static void Prefix(ref Hashtable substanceList, SubstanceTable substanceTable)
+            private static void Prefix(SubstanceTable substanceTable)
             {
                 subTable = substanceTable;
             }
@@ -111,11 +116,11 @@ namespace Asphalt
                 var bitumen = ElementLoader.FindElementByHash(SimHashes.Bitumen);
 
                 // Assigning appropiate tags
-                bitumen.materialCategory = CreateMaterialCategoryTag(phaseTag, GameTags.ManufacturedMaterial.ToString());      // This tag is for storage
+                bitumen.materialCategory = CreateMaterialCategoryTag(phaseTag, GameTags.ManufacturedMaterial.ToString()); // This tag is for storage
                 bitumen.oreTags = new Tag[] {
-                    GameTags.ManufacturedMaterial,                // This tag is for the autosweeper
-                    GameTags.BuildableAny,                        // This tag is for any building material category (Tempshift Plates, Wallpapers)
-                    GameTags.Solid                                // This tag is for mod compatibilities
+                    GameTags.ManufacturedMaterial, // This tag is for the autosweeper
+                    GameTags.BuildableAny, // This tag is for any building material category (Tempshift Plates or Wallpapers use this)
+                    GameTags.Solid // This tag is to mark generic solids.
                 };
 
                 // Pickupable bitumen art
@@ -130,7 +135,7 @@ namespace Asphalt
 
                 var material = subTable.solidMaterial;
                 material.mainTexture = ModAssets.bitumenSubstanceTexture;
-                var darkSlateGreyColor = new Color32(65, 65, 79, 255);
+                var bitumenElementColor = Util.ColorFromHex(SettingsManager.Settings.BitumenColor);
 
                 try
                 {
@@ -139,9 +144,9 @@ namespace Asphalt
                         state: Element.State.Solid,
                         kanim: animFile,
                         material: material,
-                        colour: darkSlateGreyColor,
-                        ui_colour: darkSlateGreyColor,
-                        conduit_colour: darkSlateGreyColor
+                        colour: bitumenElementColor,
+                        ui_colour: bitumenElementColor,
+                        conduit_colour: bitumenElementColor
                         );
 
                     bitumen.substance = bitumensubstance;
@@ -153,6 +158,32 @@ namespace Asphalt
             }
         }
 
+
+        [HarmonyPatch(typeof(BuildingComplete), "OnSpawn")]
+        public static class BuildingComplete_OnSpawn_Patch
+        {
+            public static void Postfix(BuildingComplete __instance)
+            {
+                // Adjusts tile speed settings runtime if the user saved configuration and didn't restart yet
+                if (SettingsManager.TempSettings.UpdateMovementMultiplierRunTime)
+                    if (__instance.name == AsphaltConfig.ID + "Complete")
+                        __instance.GetComponent<SimCellOccupier>().movementSpeedMultiplier = SettingsManager.Settings.SpeedMultiplier;
+
+                // Stops bitumen production runtime 
+                if (SettingsManager.TempSettings.HaltBitumenProduction)
+                    if (__instance.name == OilRefineryConfig.ID + "Complete")
+                    {
+                        Log.Debuglog("Halting bitumen production");
+                        ElementConverter elementConverter = __instance.GetComponent<ElementConverter>();
+
+                        int keyIndex = Array.FindIndex(elementConverter.outputElements, w => w.elementHash == SimHashes.Bitumen);
+                        var outPutElementList = new List<ElementConverter.OutputElement>(elementConverter.outputElements);
+                        outPutElementList.RemoveAt(keyIndex);
+                        elementConverter.outputElements = outPutElementList.ToArray();
+                    }
+            }
+        }
+
         private static Tag CreateMaterialCategoryTag(Tag phaseTag, string materialCategoryField)
         {
             if (string.IsNullOrEmpty(materialCategoryField))
@@ -161,7 +192,7 @@ namespace Asphalt
             return TagManager.Create(materialCategoryField);
         }
 
-        // Injecting the Settings Button
+        // Injecting the Settings Button to the mods menu
         [HarmonyPatch(typeof(ModsScreen), "BuildDisplay")]
         public static class ModsScreen_BuildDisplay_Patch
         {
@@ -170,13 +201,15 @@ namespace Asphalt
                 foreach (var modEntry in (IEnumerable)___displayedMods)
                 {
                     int index = Traverse.Create(modEntry).Field("mod_index").GetValue<int>();
-
                     Mod mod = Global.Instance.modManager.mods[index];
+
+                    // checks if the current mod entry is this mod
                     if (index >= 0 && mod.file_source.GetRoot() == ModPath)
                     {
                         Transform transform = Traverse.Create(modEntry).Field("rect_transform").GetValue<RectTransform>();
                         if (transform != null)
                         {
+                            // find an existing subscription button to copy
                             KButton subButton = null;
                             foreach (Transform child in transform)
                             {
@@ -184,7 +217,7 @@ namespace Asphalt
                                     subButton = child.gameObject.GetComponent<KButton>();
                             }
 
-                            GameObject dialogParent = transform.parent.parent.parent.gameObject;
+                            // copy the subscription button
                             KButton configButton = UIHelper.MakeKButton(
                                 info: new UIHelper.ButtonInfo(
                                     text: "Settings",
@@ -201,11 +234,9 @@ namespace Asphalt
 
             private static void OpenModSettingsScreen()
             {
-                //float scale = GameScreenManager.Instance.ssOverlayCanvas.GetComponent<KCanvasScaler>().GetCanvasScale();
-
                 if (ModAssets.Prefabs.modSettingsScreenPrefab == null)
                 {
-                    Log.Warning("Could not display UI: Mod Settings screen prefab is null");
+                    Log.Warning("Could not display UI: Mod Settings screen prefab is null.");
                     return;
                 }
 

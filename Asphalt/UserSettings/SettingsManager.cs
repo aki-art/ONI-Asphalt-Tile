@@ -1,83 +1,72 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using Newtonsoft.Json;
 
 // WIP
 namespace Asphalt
 {
     class SettingsManager
     {
+        private const string SETTINGSFOLDER = "settings";
+        private const string FOLDERNAME = "AsphaltTiles";
+        private const string FILE_NAME = "config.json";
+
         public static string localPath;
         public static string exteriorPath;
-        private const string FILE_NAME = "config.json";
-        private const string FOLDER = "settings/AsphaltTiles";
+        public static bool isThereAnOutsideConfig = false;
+        public static bool isThereALocalConfig = false;
+
         public static UserSettings Settings { get; set; }
+        public static UserSettings DefaultSettings { get; set; }
+        public static UserSettings LoadedSettings { get; set; }
+        public static TempSettings TempSettings { get; set; } // settings that dont get saved
 
-        public static bool IsThereAnOutsideConfig
-        {
-            get
-            {
-                return File.Exists(exteriorPath);
-            }
-        }
-
-        public static bool IsThereALocalConfig
-        {
-            get
-            {
-                return File.Exists(localPath);
-            }
-        }
 
         public static void Initialize()
         {
             localPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             exteriorPath = GetDirectory();
 
+            isThereAnOutsideConfig = File.Exists(Path.Combine(localPath, FILE_NAME));
+            isThereAnOutsideConfig = File.Exists(Path.Combine(exteriorPath, FILE_NAME));
+
             Log.Debuglog("Config save folder in case of local: " + localPath);
             Log.Debuglog("Config save folder in case of exterior: " + exteriorPath);
 
-            if (IsThereAnOutsideConfig)
-                Settings = LoadConfigFromFile(exteriorPath);
-            else if (IsThereALocalConfig)
-                Settings = LoadConfigFromFile(localPath);
-            else Settings = new UserSettings();
-            // Leave at defaults otherwise
-
-            if (Settings.UseLocalFolder)
-            {
-                if (IsThereAnOutsideConfig)
-                {
-                    if (!IsThereALocalConfig)
-                    {
-                        Log.Info($"Removed settings file from {exteriorPath}, saving settings from now on at {localPath}");
-                        Directory.Delete(exteriorPath);
-                        WriteSettingsToFile(localPath);
-                    }
-                    else
-                    {
-                        Log.Info($"Removed settings file from {exteriorPath}. Local config file found.");
-                        Directory.Delete(exteriorPath);
-                    }
-                }
-            }
+            LoadSettings();
         }
-        public static string GetDirectory()
+
+        public static void LoadSettings()
         {
-            return Path.Combine(Util.RootFolder(), FOLDER);
+            if (isThereAnOutsideConfig)
+                Settings = LoadSettingsFromFile(exteriorPath);
+            else if (isThereALocalConfig)
+                Settings = LoadSettingsFromFile(localPath);
+            else Settings = new UserSettings();
+
+            LoadedSettings = Settings.Clone();
+            DefaultSettings = new UserSettings();
+            TempSettings = new TempSettings();
         }
 
-        // Called from UI
         public static void SaveSettings()
         {
             if (Settings.UseLocalFolder)
+            {
+                if (isThereAnOutsideConfig)
+                {
+                    Log.Info($"Removed settings file from {exteriorPath}.");
+                    RemoveModSettingsFolder();
+                }
+
                 WriteSettingsToFile(localPath);
+            }
             else
                 WriteSettingsToFile(exteriorPath);
         }
 
-        // Write every property in UserSettings into a JSON file
         public static void WriteSettingsToFile(string path)
         {
             var filePath = Path.Combine(path, FILE_NAME);
@@ -99,13 +88,31 @@ namespace Asphalt
             }
 
         }
+        private static void RemoveModSettingsFolder()
+        {
+            Directory.Delete(exteriorPath, true); // Removes Asphalt Tiles folder
 
-        private static UserSettings LoadConfigFromFile(string path)
+            // .../Klei/OxygenNotIncluded/mods/settings 
+            string settingsPath = Path.Combine(Util.RootFolder(), "mods", SETTINGSFOLDER);
+
+            // making sure no other mods were using the settings folder, only then delete that folder too
+            if (IsDirectoryEmpty(settingsPath)) 
+            {
+                Directory.Delete(settingsPath, true);
+                Log.Info($"Removed settings file from {settingsPath}, saving settings from now on at {localPath}");
+            }
+            else
+                Log.Info($"Removed settings file from {exteriorPath}, saving settings from now on at {localPath}");
+        }
+
+
+        private static UserSettings LoadSettingsFromFile(string path)
         {
             var filePath = Path.Combine(path, FILE_NAME);
             Log.Debuglog("Loading config files from: " + filePath);
             UserSettings userSettings = new UserSettings();
-           /* try
+
+            try
             {
                 using (var r = new StreamReader(filePath))
                 {
@@ -115,11 +122,20 @@ namespace Asphalt
             }
             catch (Exception e)
             {
-                Log.Error($"Error reading {filePath}, {e.Message}");
-                return null;
+                Log.Warning($"Couldn't read {filePath}, {e.Message}. Using default settings.");
+                return new UserSettings();
             }
-*/
+
             return userSettings;
         }
+        private static bool IsDirectoryEmpty(string path)
+        {
+            return !Directory.EnumerateFileSystemEntries(path).Any();
+        }
+        public static string GetDirectory()
+        {
+            return Path.Combine(Util.RootFolder(), "mods", SETTINGSFOLDER, FOLDERNAME);
+        }
+
     }
 }

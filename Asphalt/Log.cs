@@ -2,9 +2,10 @@
 
 namespace Asphalt
 {
+    // Simple log helper, so logs by this mod are easily identifiable.
     class Log
     {
-        private static readonly string prefix = $"[ASPHALT]: ";
+        private static readonly string prefix = $"[{typeof(Log).Assembly.GetName().Name}]: ";
 
         public static void Info(object arg)
         {
@@ -29,6 +30,8 @@ namespace Asphalt
                 Warn(e);
             }
         }
+
+        // only show up in debug versions
         public static void Debuglog(object arg)
         {
 #if DEBUG

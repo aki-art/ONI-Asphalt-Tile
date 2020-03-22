@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
 
 namespace Asphalt
@@ -41,27 +38,10 @@ namespace Asphalt
             Prefabs.nukeScreenPrefab = AssetBundle.LoadAsset<GameObject>("NukeDialog");
         }
 
-        // Manually loading in texture file from assembly directory
-        private static Texture2D LoadTexture(string name, string directory = null)
-        {
-            Texture2D texture = null;
-            if (directory == null)
-                directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "anim", "assets");
-            var texFile = Path.Combine(directory, name + ".png");
-
-            if (File.Exists(texFile))
-            {
-                var data = File.ReadAllBytes(texFile);
-                texture = new Texture2D(1, 1);
-                texture.LoadImage(data);
-            }
-            else
-                Debug.LogError($"ASPHALT: Could not load texture at path {texFile}.");
-            return texture;
-        }
-
-        // This code is courtesy of CynicalBusiness, used with permission.
+        // Thanks for CynicalBusiness for help with this code.
+        // Used with permission.
         // Original: https://lab.vevox.io/games/oxygen-not-included/matts-mods/blob/master/IndustrializationFundementals/Building/TileWoodConfig.cs
+        // Loads a custom texture atlas.
         public static TextureAtlas GetCustomAtlas(string name, Type type, TextureAtlas tileAtlas)
         {
             var dir = Path.GetDirectoryName(type.Assembly.Location);
@@ -84,6 +64,25 @@ namespace Asphalt
                 Debug.LogError($"ASPHALT: Could not load atlas image at path {texFile}.");
 
             return atlas;
+        }
+
+        // Loads a texture file from assembly directory.
+        private static Texture2D LoadTexture(string name, string directory = null)
+        {
+            Texture2D texture = null;
+            if (directory == null)
+                directory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "anim", "assets");
+            var texFile = Path.Combine(directory, name + ".png");
+
+            if (File.Exists(texFile))
+            {
+                var data = File.ReadAllBytes(texFile);
+                texture = new Texture2D(1, 1);
+                texture.LoadImage(data);
+            }
+            else
+                Debug.LogError($"ASPHALT: Could not load texture at path {texFile}.");
+            return texture;
         }
 
     }

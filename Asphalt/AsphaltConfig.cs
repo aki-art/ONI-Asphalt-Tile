@@ -1,5 +1,4 @@
 ﻿using STRINGS;
-using System;
 using System.IO;
 using TUNING;
 using UnityEngine;
@@ -16,7 +15,7 @@ namespace Asphalt
 
         public static readonly int BlockTileConnectorID = Hash.SDBMLower("tiles_bunker_tops");
 
-        public string[] BitumenMaterials = new string[1] { "Bitumen" };
+        private readonly string[] BitumenMaterials = new string[1] { "Bitumen" };
 
         public override BuildingDef CreateBuildingDef()
         {
@@ -24,14 +23,14 @@ namespace Asphalt
                 id: ID,
                 width: 1,
                 height: 1,
-                anim: "floor_asphalt_kanim",                                                  // This controls UI/BuildMenu art
-                hitpoints: TUNING.BUILDINGS.HITPOINTS.TIER2,                                  // 100
-                construction_time: TUNING.BUILDINGS.CONSTRUCTION_TIME_SECONDS.TIER2,          // 30f
-                construction_mass: TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,               // 200f
+                anim: "floor_asphalt_kanim",
+                hitpoints: TUNING.BUILDINGS.HITPOINTS.TIER2,
+                construction_time: TUNING.BUILDINGS.CONSTRUCTION_TIME_SECONDS.TIER2,
+                construction_mass: TUNING.BUILDINGS.CONSTRUCTION_MASS_KG.TIER3,
                 construction_materials: BitumenMaterials,
-                melting_point: TUNING.BUILDINGS.MELTING_POINT_KELVIN.TIER1,                   // 1600f
+                melting_point: TUNING.BUILDINGS.MELTING_POINT_KELVIN.TIER1,
                 build_location_rule: BuildLocationRule.Tile,
-                decor: new EffectorValues(-5, 1),                                             // -5 decor in a single tile range
+                decor: new EffectorValues(-5, 1),
                 noise: NOISE_POLLUTION.NONE
             );
 
@@ -76,7 +75,7 @@ namespace Asphalt
 
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
             simCellOccupier.doReplaceElement = true;
-            simCellOccupier.movementSpeedMultiplier = 1000f;//UserSettings.SpeedMultiplier;  // Defaults to 2.0
+            simCellOccupier.movementSpeedMultiplier = SettingsManager.Settings.SpeedMultiplier;
             simCellOccupier.strengthMultiplier = 2f;
         }
 

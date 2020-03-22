@@ -9,48 +9,39 @@ namespace Asphalt
         private bool shown = false;
         public bool pause = true;
         public const float SCREEN_SORT_KEY = 100f;
-        public System.Action onDeactivateCB;
 
-        [SerializeField]
         private Toggle tileToggle;
-        [SerializeField]
-        private GameObject cancelButton;
-        [SerializeField]
-        private GameObject confirmButton;
-        [SerializeField]
-        private GameObject bitumenCycleSelector;
-        private FCycle bitumenFCycler;
+        private FButton cancelButton;
+        private FButton confirmButton;
+        private FCycle bitumenCycleSelector;
 
         protected override void OnPrefabInit()
         {
             #region setting object references
 
             // This would be handled by Unity normally via magic
-            cancelButton = gameObject.transform.Find("CancelButton").gameObject;
-            confirmButton = gameObject.transform.Find("OKButton").gameObject;
+            cancelButton = gameObject.transform.Find("CancelButton").gameObject.AddComponent<FButton>();
+            confirmButton = gameObject.transform.Find("OKButton").gameObject.AddComponent<FButton>();
             tileToggle = gameObject.transform.Find("TogglePanel/Toggle").GetComponent<Toggle>();
-            bitumenCycleSelector = gameObject.transform.Find("CycleSelectorPanel").gameObject;
+            bitumenCycleSelector = gameObject.transform.Find("CycleSelectorPanel").gameObject.AddComponent<FCycle>(); ;
 
             #endregion
 
             base.OnPrefabInit();
+
             ConsumeMouseScroll = true;
             activateOnSpawn = true;
             gameObject.SetActive(true);
         }
         public void ShowDialog()
         {
-            while (transform.parent.GetComponent<Canvas>() == null && transform.parent.parent != null)
-            {
+            if (transform.parent.GetComponent<Canvas>() == null && transform.parent.parent != null)
                 transform.SetParent(transform.parent.parent);
-            }
+
             transform.SetAsLastSibling();
 
-            var cancelFButton = cancelButton.AddComponent<FButton>();
-            cancelFButton.OnClick += OnClickCancel;
-
-            var confirmFButton = confirmButton.AddComponent<FButton>();
-            confirmFButton.OnClick += OnClickApply;
+            cancelButton.OnClick += OnClickCancel;
+            confirmButton.OnClick += OnClickApply;
 
             var bitumenOptions = new List<KeyValuePair<string, string>>
             {
@@ -59,8 +50,7 @@ namespace Asphalt
                 new KeyValuePair<string, string>("Leave", "Does not touch bitumen.")
             };
 
-            bitumenFCycler = bitumenCycleSelector.AddComponent<FCycle>();
-            bitumenFCycler.Options = bitumenOptions;
+            bitumenCycleSelector.Options = bitumenOptions;
         }
 
         #region Handling Input, Screen and Camera
@@ -100,7 +90,6 @@ namespace Asphalt
 
         protected override void OnDeactivate()
         {
-            onDeactivateCB?.Invoke();
             OnShow(false);
         }
 
@@ -155,7 +144,7 @@ namespace Asphalt
             if (tileToggle.isOn)
                 Nuker.ChangeAllAsphaltToSandstoneTiles();
 
-            switch (bitumenFCycler.GetValue())
+            switch (bitumenCycleSelector.GetValue())
             {
                 case "Remove All":
                     Nuker.RemoveAllBitumenFromWorld(false);
@@ -167,7 +156,13 @@ namespace Asphalt
                 default:
                     break;
             }
+
+            SettingsManager.TempSettings.HaltBitumenProduction = true;
+            SettingsManager.TempSettings.NukeAsphaltTiles = false;
+
             Deactivate();
+
+
         }
 
         public void OnClickCancel()
