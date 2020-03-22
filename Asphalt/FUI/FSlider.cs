@@ -31,10 +31,10 @@ namespace Asphalt
         {
             mapValue = map;
             inputField = field;
-            inputField.OnValueChanged += OnInputFieldChanged;
+            inputField.OnEndEdit += OnInputFieldChanged;
         }
 
-        private void OnInputFieldChanged(string _)
+        private void OnInputFieldChanged()
         {
             float val = inputField.FloatValue;
 

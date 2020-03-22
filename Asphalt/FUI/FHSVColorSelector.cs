@@ -41,6 +41,7 @@ namespace Asphalt
         private Image resetImg;
         private Image resetTempImg;
 
+
         static float MapHue(float x)
         {
             return x / HUE_MAX;
@@ -81,9 +82,9 @@ namespace Asphalt
             resetButton.OnClick += ResetColor;
             resetTempButton.OnClick += ResetTempColor;
 
-            hueSlider.OnChange += TriggerOnChange;
-            satSlider.OnChange += TriggerOnChange;
-            valSlider.OnChange += TriggerOnChange;
+            hueSlider.OnChange += SliderOnChange;
+            satSlider.OnChange += SliderOnChange;
+            valSlider.OnChange += SliderOnChange;
 
             hueSlider.AttachInputField(hueField, MapHue);
             satSlider.AttachInputField(satField, MapVal);
@@ -103,32 +104,8 @@ namespace Asphalt
             resetImg.color = defaultColor;
             resetTempImg.color = loadedColor;
         }
-        public void SetColor(Color RGBColor)
-        {
-            Color.RGBToHSV(RGBColor, out h, out s, out v);
-            color = RGBColor;
 
-            UpdateColorPreviews();
-            UpdateInputFields();
-            UpdateSliderValues();
-        }
-        public void SetColorFromHex(string hex)
-        {
-            Log.Info("trying to set color: " + hex);
-            color = Util.ColorFromHex(hex);
-            Color.RGBToHSV(color, out h, out s, out v);
-            Log.Info("set color:  " + Util.ToHexString(color));
-
-            UpdateColorPreviews();
-            UpdateInputFields();
-            UpdateSliderValues();
-        }
-        public string GetHexValue()
-        {
-            return Util.ToHexString(color);
-        }
-
-        public void UpdateColor()
+        private void SliderOnChange()
         {
             h = hueSlider.Value;
             s = satSlider.Value;
@@ -138,7 +115,38 @@ namespace Asphalt
 
             UpdateColorPreviews();
             UpdateInputFields();
+
+            OnChange?.Invoke();
         }
+
+        public void UpdateAll()
+        {
+            UpdateColorPreviews();
+            UpdateInputFields();
+            UpdateSliderValues();
+
+            OnChange?.Invoke();
+        }
+
+        public void SetColor(Color RGBColor)
+        {
+            Color.RGBToHSV(RGBColor, out h, out s, out v);
+            color = RGBColor;
+
+            UpdateAll();
+        }
+        public void SetColorFromHex(string hex)
+        {
+            color = Util.ColorFromHex(hex);
+            Color.RGBToHSV(color, out h, out s, out v);
+
+            UpdateAll();
+        }
+        public string GetHexValue()
+        {
+            return Util.ToHexString(color);
+        }
+
         private void UpdateInputFields()
         {
             float m = 100f;
@@ -152,6 +160,9 @@ namespace Asphalt
             satColorImage.color = color;
             valImage.color = color;
             previewImage.color = color;
+
+            resetImg.gameObject.SetActive(IsChanged(defaultColor));
+            resetTempImg.gameObject.SetActive(IsChanged(loadedColor));
         }
 
         private void UpdateSliderValues()
@@ -164,13 +175,13 @@ namespace Asphalt
         private void ResetTempColor()
         {
             SetColorFromHex(SettingsManager.LoadedSettings.BitumenColor);
-            TriggerOnChange();
+            UpdateAll();
         }
 
         private void ResetColor()
         {
             SetColorFromHex(SettingsManager.DefaultSettings.BitumenColor);
-            TriggerOnChange();
+            UpdateAll();
         }
         public bool IsChanged(Color defaultValue)
         {
@@ -193,14 +204,5 @@ namespace Asphalt
             return (rDiff + gDiff + bDiff) <= treshold;
         }
 
-        private void TriggerOnChange()
-        {
-            resetImg.gameObject.SetActive(IsChanged(defaultColor));
-            resetTempImg.gameObject.SetActive(IsChanged(loadedColor));
-
-            UpdateColor();
-
-            OnChange?.Invoke();
-        }
     }
 }

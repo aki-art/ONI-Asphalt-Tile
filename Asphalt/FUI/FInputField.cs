@@ -49,7 +49,7 @@ namespace Asphalt
 		}
 		private void OnEditEnd(string input)
 		{
-				StopEditing();
+				//StopEditing();
 				StartCoroutine(DelayedEndEdit());
 		}
 
