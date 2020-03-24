@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -42,6 +41,7 @@ namespace Asphalt
 
         public void AssignRanges(List<Range> rangeList)
         {
+            
             ranges = rangeList;
             UpdateLabels();
         }
@@ -76,31 +76,31 @@ namespace Asphalt
         {
             if (ranges != null && ranges.Count > 0)
             {
-                Log.Info("Checking: " + val);
-                var currentRange = ranges.FirstOrDefault(r => r.min <= val);
+                int currentIndex = ranges.FindLastIndex(r => r.min <= val);
+                var currentRange = ranges[currentIndex];
+                
                 if(currentRange.name != null)
                 {
-                    Log.Info(currentRange.name);
                     speedRangeLabel.text = currentRange.name;
                     speedRangeLabel.color = currentRange.color;
                 }
             }
-            else Log.Info("no ranges defined");
         }
 
-
-        // Thanks for Asquaredπ and Peter Han for help with the math
-        private float MapValue(float val)
+        public static float MapValue(float val)
         {
             float actualValue;
-            if (val < .66f) // on the first 2 thirds of the slider, we get a linear scale from 1-2.95
-                actualValue = 3f * val + 1;
-            else if (val == 0.66f) // it just skips between 2.95 and 3.05 (rounded) without hardcoding this one value
-                actualValue = 3f;
-            else
-                actualValue = (float)Math.Pow(Math.E, 20.718 * (val - 2f / 3f)) + 2; // on the last half, we get an exponential range from 3.05 - 1000.285 (rounded)
+            const float maxValue = 20f;
+            const float e = 4.565703f;
 
-            if (actualValue > 1000f) actualValue = 1000f; // clamping max value
+            if (val < .66f) 
+                actualValue = 3f * val + 1; // linear scale from 1-2.95 (rounded)
+            else if (val == 0.66f)
+                actualValue = 3f; // static value
+            else
+                actualValue = (float)(maxValue * Math.Pow(val, e)); // exponential scale 3.05 - 20 (rounded)
+
+            actualValue = Mathf.Clamp(actualValue, 1f, maxValue);
             actualValue = (float)Math.Round(actualValue * 20) / 20; // rounding to .05
 
             return actualValue;
@@ -115,15 +115,12 @@ namespace Asphalt
         public struct Range
         {
             public float min;
-            public float max;
             public string name;
             public Color color;
 
-
-            public Range(float minimum, float maximum, string rangeName, Color rangeColor)
+            public Range(float minimum, string rangeName, Color rangeColor)
             {
                 min = minimum;
-                max = maximum;
                 name = rangeName;
                 color = rangeColor;
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,9 +7,6 @@ namespace Asphalt
 {
     class FHSVColorSelector : KMonoBehaviour
     {
-        // TODO:
-        // input fields should prompt change too
-
         public event System.Action OnChange;
 
         public FSlider hueSlider;
@@ -29,7 +27,7 @@ namespace Asphalt
         private Image previewImage;
 
         private float h;
-        private float s;    
+        private float s;
         private float v;
 
         public Color color;
@@ -121,11 +119,10 @@ namespace Asphalt
 
         public void UpdateAll()
         {
-            UpdateColorPreviews();
             UpdateInputFields();
             UpdateSliderValues();
+            UpdateColorPreviews();
 
-            OnChange?.Invoke();
         }
 
         public void SetColor(Color RGBColor)
@@ -162,7 +159,7 @@ namespace Asphalt
             previewImage.color = color;
 
             resetImg.gameObject.SetActive(IsChanged(defaultColor));
-            resetTempImg.gameObject.SetActive(IsChanged(loadedColor));
+            resetTempImg.gameObject.SetActive(IsChanged(loadedColor) && !CompareColors(loadedColor, defaultColor, 1));
         }
 
         private void UpdateSliderValues()
@@ -174,35 +171,33 @@ namespace Asphalt
 
         private void ResetTempColor()
         {
-            SetColorFromHex(SettingsManager.LoadedSettings.BitumenColor);
-            UpdateAll();
+            SetColor(loadedColor);
         }
 
         private void ResetColor()
         {
-            SetColorFromHex(SettingsManager.DefaultSettings.BitumenColor);
-            UpdateAll();
+            SetColor(defaultColor);
         }
         public bool IsChanged(Color defaultValue)
         {
             return !CompareColors(color, defaultValue, 1);
         }
 
-        private bool CompareColors(Color c1, Color c2, byte treshold)
+        // color.Equals didnt seem reliable
+        private bool CompareColors(Color c1, Color c2, double treshold)
         {
-            var c1r = c1.r * 1000;
-            var c1g = c1.g * 1000;
-            var c1b = c1.b * 1000;
-            var c2r = c2.r * 1000;
-            var c2g = c2.g * 1000;
-            var c2b = c2.b * 1000;
+            var c1r = Math.Floor(c1.r * 1000);
+            var c1g = Math.Floor(c1.g * 1000);
+            var c1b = Math.Floor(c1.b * 1000);
+            var c2r = Math.Floor(c2.r * 1000);
+            var c2g = Math.Floor(c2.g * 1000);
+            var c2b = Math.Floor(c2.b * 1000);
 
-            float rDiff = Mathf.Abs(c1r - c2r);
-            float gDiff = Mathf.Abs(c1g - c2g);
-            float bDiff = Mathf.Abs(c1b - c2b);
+            bool rDiff = Math.Abs(c1r - c2r) < treshold;
+            bool gDiff = Math.Abs(c1g - c2g) < treshold;
+            bool bDiff = Math.Abs(c1b - c2b) < treshold;
 
-            return (rDiff + gDiff + bDiff) <= treshold;
+            return (rDiff && gDiff && bDiff);
         }
-
     }
 }

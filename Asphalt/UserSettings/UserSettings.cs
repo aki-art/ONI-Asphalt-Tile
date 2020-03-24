@@ -7,11 +7,9 @@ namespace Asphalt
     public class UserSettings
     {
         [JsonProperty]
-        public bool DisableBitumenProduction { get; set; } = false;
+        public float SpeedMultiplier { get; set; } = 0.33333f;
         [JsonProperty]
-        public float SpeedMultiplier { get; set; } = 2.0f;
-        [JsonProperty]
-        public bool UseLocalFolder { get; set; } = false;
+        public bool UseSafeFolder { get; set; } = true;
         [JsonProperty]
         public string BitumenColor { get; set; } = "41414FFF";
     }

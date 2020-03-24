@@ -10,7 +10,7 @@ namespace Asphalt
             if (KInputManager.isFocused)
             {
                 KInputManager.SetUserActive();
-                PlaySound(UISoundHelper.ClickOpen);
+                PlaySound(UISoundHelper.Click);
             }
         }
 

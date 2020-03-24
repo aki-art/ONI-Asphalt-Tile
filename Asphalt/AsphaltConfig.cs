@@ -56,7 +56,7 @@ namespace Asphalt
             buildingDef.BlockTilePlaceAtlas = ModAssets.GetCustomAtlas(Path.Combine("anim", "assets", "tiles_asphalt_place"), GetType(), referenceAtlas);
 
             // Custom top pieces
-            BlockTileDecorInfo decorBlockTileInfo = UnityEngine.Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info"));
+            BlockTileDecorInfo decorBlockTileInfo = Object.Instantiate(Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_info"));
             decorBlockTileInfo.atlas = ModAssets.GetCustomAtlas(Path.Combine("anim", "assets", "tiles_asphalt_tops"), GetType(), decorBlockTileInfo.atlas);
             buildingDef.DecorBlockTileInfo = decorBlockTileInfo;
             buildingDef.DecorPlaceBlockTileInfo = Assets.GetBlockTileDecorInfo("tiles_bunker_tops_decor_place_info");
@@ -75,7 +75,7 @@ namespace Asphalt
 
             SimCellOccupier simCellOccupier = go.AddOrGet<SimCellOccupier>();
             simCellOccupier.doReplaceElement = true;
-            simCellOccupier.movementSpeedMultiplier = SettingsManager.Settings.SpeedMultiplier;
+            simCellOccupier.movementSpeedMultiplier = FSpeedSlider.MapValue(SettingsManager.Settings.SpeedMultiplier);
             simCellOccupier.strengthMultiplier = 2f;
         }
 

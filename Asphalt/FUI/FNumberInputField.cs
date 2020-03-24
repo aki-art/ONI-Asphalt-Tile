@@ -24,7 +24,6 @@ namespace Asphalt
         }
         protected override void ProcessInput(string input)
         {
-            Log.Info("input:" + input);
             if (!input.IsNullOrWhiteSpace()) 
                 base.ProcessInput(FloatValue.ToString());
         }

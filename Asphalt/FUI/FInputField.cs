@@ -36,8 +36,6 @@ namespace Asphalt
 			if(!isEditing)
 			{
 				isEditing = true;
-				inputField.Select();
-				inputField.ActivateInputField();
 				KScreenManager.Instance.RefreshStack();
 
 				OnStartEdit?.Invoke();
@@ -49,7 +47,6 @@ namespace Asphalt
 		}
 		private void OnEditEnd(string input)
 		{
-				//StopEditing();
 				StartCoroutine(DelayedEndEdit());
 		}
 
@@ -78,7 +75,6 @@ namespace Asphalt
 			if (!input.IsNullOrWhiteSpace())
 			{ 
 				SetDisplayValue(input);
-				Log.Info("processed input:" + input);
 			}
 		}
 

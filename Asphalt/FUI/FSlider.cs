@@ -52,10 +52,8 @@ namespace Asphalt
             if (slider.value == slider.maxValue)
                 OnMaxReached?.Invoke();
         }
-        private void UpdateInputField()
-        {
-            inputField.SetDisplayValue(slider.value.ToString());
-        }
+
+        // This is a little lazy, but it works just fine
         public void OnDrag(PointerEventData eventData)
         {
             if (KInputManager.isFocused)
@@ -66,6 +64,7 @@ namespace Asphalt
                 UpdateSlider();
             }
         }
+
         public void OnPointerDown(PointerEventData eventData)
         {
             if (KInputManager.isFocused)
@@ -89,7 +88,8 @@ namespace Asphalt
             }
         }
 
-
+        // Based on Ksliders sounds
+        // Minor bug: the pitch is a little too high
         public void PlayMoveSound()
         {
             if (KInputManager.isFocused)

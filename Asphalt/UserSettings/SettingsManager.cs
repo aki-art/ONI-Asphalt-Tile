@@ -40,11 +40,12 @@ namespace Asphalt
 
         public static void LoadSettings()
         {
+            Settings = new UserSettings();
+
             if (isThereAnOutsideConfig)
                 Settings = LoadSettingsFromFile(exteriorPath);
             else if (isThereALocalConfig)
                 Settings = LoadSettingsFromFile(localPath);
-            else Settings = new UserSettings();
 
             LoadedSettings = Settings.Clone();
             DefaultSettings = new UserSettings();
@@ -53,11 +54,11 @@ namespace Asphalt
 
         public static void SaveSettings()
         {
-            if (Settings.UseLocalFolder)
+
+            if (!Settings.UseSafeFolder)
             {
                 if (isThereAnOutsideConfig)
                 {
-                    Log.Info($"Removed settings file from {exteriorPath}.");
                     RemoveModSettingsFolder();
                 }
 
@@ -65,6 +66,9 @@ namespace Asphalt
             }
             else
                 WriteSettingsToFile(exteriorPath);
+
+            isThereAnOutsideConfig = File.Exists(Path.Combine(localPath, FILE_NAME));
+            isThereAnOutsideConfig = File.Exists(Path.Combine(exteriorPath, FILE_NAME));
         }
 
         public static void WriteSettingsToFile(string path)
@@ -90,19 +94,27 @@ namespace Asphalt
         }
         private static void RemoveModSettingsFolder()
         {
-            Directory.Delete(exteriorPath, true); // Removes Asphalt Tiles folder
-
-            // .../Klei/OxygenNotIncluded/mods/settings 
-            string settingsPath = Path.Combine(Util.RootFolder(), "mods", SETTINGSFOLDER);
-
-            // making sure no other mods were using the settings folder, only then delete that folder too
-            if (IsDirectoryEmpty(settingsPath)) 
+            try
             {
-                Directory.Delete(settingsPath, true);
-                Log.Info($"Removed settings file from {settingsPath}, saving settings from now on at {localPath}");
+                Directory.Delete(exteriorPath, true); // Removes Asphalt Tiles folder
+                Log.Info($"Removed folder at {exteriorPath}.");
+                Log.Info($"Attempting to remove settings folder...");
+
+                // .../Klei/OxygenNotIncluded/mods/settings 
+                string settingsPath = Path.Combine(Util.RootFolder(), "mods", SETTINGSFOLDER);
+                DirectoryInfo settingsDir = new DirectoryInfo(settingsPath);
+
+                // Deletes this DirectoryInfo if it is empty.
+                // If other mod files are present, it will leave them alone.
+                settingsDir.Delete(recursive: false);
+                if (Directory.Exists(settingsPath))
+                    Log.Info($"Removed folder at {settingsPath}");
+                else
+                    Log.Info("Other files were using this folder, leaving it alone.");
+            } 
+            catch
+            {
             }
-            else
-                Log.Info($"Removed settings file from {exteriorPath}, saving settings from now on at {localPath}");
         }
 
 

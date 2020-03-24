@@ -10,10 +10,7 @@ namespace Asphalt
         public GameObject TargetPanel;
 
         private LayoutElement layoutElement;
-
-        private Text controlLabel;
-        public string controlLabelOnText;
-        public string controlLabelOffText;
+        private RectTransform arrowIcon;
 
         private bool open = true;
         private bool finishedTransition = true;
@@ -29,8 +26,7 @@ namespace Asphalt
             controlButton = gameObject.AddComponent<FButton>();
             controlButton.OnClick += TogglePanel;
 
-            controlLabel = transform.Find("Label").GetComponent<Text>();
-            controlLabelOffText = controlLabel.text;
+            arrowIcon = transform.Find("Arrow").GetComponent<RectTransform>();
         }
 
         // assign one or more panels controlled by this accordion. the element is expected to have a layoutElement component
@@ -54,19 +50,20 @@ namespace Asphalt
                 if (open)
                 {
                     finishedTransition = false;
-                    StartCoroutine("CloseTarget");
-                    controlLabel.text = controlLabelOffText;
+                    StartCoroutine(CloseTarget());
+                    arrowIcon.Rotate(0, 0, 90f);
                     open = false;
                 }
                 else
                 {
                     finishedTransition = false;
-                    StartCoroutine("OpenTarget");
-                    controlLabel.text = controlLabelOnText;
+                    StartCoroutine(OpenTarget());
+                    arrowIcon.Rotate(0, 0, -90f);
                     open = true;
                 }
             }
         }
+
 
         public IEnumerator CloseTarget()
         {
@@ -99,14 +96,12 @@ namespace Asphalt
         {
             SetTargetHeight(0);
             finishedTransition = true;
-            controlLabel.text = controlLabelOffText;
             open = false;
         }
         public void OpenTargetWithoutDelay()
         {
             SetTargetHeight(1f);
             finishedTransition = true;
-            controlLabel.text = controlLabelOnText;
             open = true;
         }
 

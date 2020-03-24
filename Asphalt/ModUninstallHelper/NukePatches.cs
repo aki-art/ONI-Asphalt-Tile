@@ -1,8 +1,5 @@
 ﻿using Harmony;
-using System;
-using System.Diagnostics;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Asphalt
 {
@@ -14,8 +11,10 @@ namespace Asphalt
         {
             public static void Postfix()
             {
-                if(SettingsManager.TempSettings.NukeAsphaltTiles)
-                { 
+
+                if (SettingsManager.TempSettings.NukeAsphaltTiles)
+                {
+
                     if (ModAssets.Prefabs.nukeScreenPrefab == null) 
                     { 
                         Log.Warning("Could not display UI: Nuke screen prefab is null"); 
@@ -23,9 +22,13 @@ namespace Asphalt
                     }
 
                     Transform parent = UIHelper.GetACanvas("AsphaltNuke").transform;
-                    GameObject nukeScreen = UnityEngine.Object.Instantiate(ModAssets.Prefabs.nukeScreenPrefab.gameObject, parent);
+                    GameObject nukeScreen = Object.Instantiate(ModAssets.Prefabs.nukeScreenPrefab.gameObject, parent);
                     NukeScreen nukeScreenComponent = nukeScreen.AddComponent<NukeScreen>();
                     nukeScreenComponent.ShowDialog();
+                }
+                else
+                {
+                    SettingsManager.TempSettings.HaltBitumenProduction = false;
                 }
             }
         }

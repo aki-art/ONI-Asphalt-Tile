@@ -159,9 +159,9 @@ namespace Asphalt
 
             SettingsManager.TempSettings.HaltBitumenProduction = true;
             SettingsManager.TempSettings.NukeAsphaltTiles = false;
+            Nuker.StopBitumenProductionRuntime();
 
             Deactivate();
-
 
         }
 

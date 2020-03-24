@@ -56,19 +56,30 @@ namespace Asphalt
             RebuildTiles();
         }
 
+        // Stops bitumen production for already spawned refineries
+        public static void StopBitumenProductionRuntime()
+        {
+            foreach(BuildingComplete building in Components.BuildingCompletes)
+            if (building.name == OilRefineryConfig.ID + "Complete")
+            {
+                Log.Debuglog("Halting bitumen production");
+                ElementConverter elementConverter = building.GetComponent<ElementConverter>();
+
+                int keyIndex = Array.FindIndex(elementConverter.outputElements, w => w.elementHash == SimHashes.Bitumen);
+                var outPutElementList = new List<ElementConverter.OutputElement>(elementConverter.outputElements);
+                outPutElementList.RemoveAt(keyIndex);
+                elementConverter.outputElements = outPutElementList.ToArray();
+            }
+        }
         public static void RemoveAllBitumenFromWorld(bool refund)
         {
             if (Components.Pickupables == null) return;
-            Log.Info("Components not null");
             float amount = 0;
 
             foreach (Pickupable pickupable in Components.Pickupables)
             {
-                if(pickupable.PrimaryElement.Element == null) Log.Info("element is null");
                 if (pickupable.PrimaryElement.Element == ElementLoader.FindElementByHash(SimHashes.Bitumen))
                 {
-                        //amount += pickupable.storage.Capacity() - pickupable.storage.RemainingCapacity();
-                        //Log.Info($"Removed {pickupable.storage.capacityKg} Bitumen from storages");
                         amount += pickupable.TotalAmount;
                         PopFXManager.Instance.SpawnFX(PopFXManager.Instance.sprite_Negative, UI.SANDBOXTOOLS.CLEARFLOOR.DELETED, pickupable.transform);
                         Util.KDestroyGameObject(pickupable.gameObject);            

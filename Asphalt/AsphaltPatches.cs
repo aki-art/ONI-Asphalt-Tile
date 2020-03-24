@@ -74,27 +74,24 @@ namespace Asphalt
         {
             public static void Postfix(GameObject go)
             {
-                if (!SettingsManager.Settings.DisableBitumenProduction)
-                {
-                    ElementDropper elementDropper = go.AddComponent<ElementDropper>();
-                    elementDropper.emitMass = 100f;
-                    elementDropper.emitTag = new Tag("Bitumen");
-                    elementDropper.emitOffset = Vector3.zero;
+                ElementDropper elementDropper = go.AddComponent<ElementDropper>();
+                elementDropper.emitMass = 100f;
+                elementDropper.emitTag = new Tag("Bitumen");
+                elementDropper.emitOffset = Vector3.zero;
 
-                    ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
+                ElementConverter elementConverter = go.AddOrGet<ElementConverter>();
 
-                    var bitumenOutput = new ElementConverter.OutputElement(
-                        kgPerSecond: 5f,
-                        element: SimHashes.Bitumen,
-                        minOutputTemperature: 348.15f,
-                        useEntityTemperature: false,
-                        storeOutput: true,
-                        outputElementOffsetx: 0,
-                        outputElementOffsety: 1f);
+                var bitumenOutput = new ElementConverter.OutputElement(
+                    kgPerSecond: 5f,
+                    element: SimHashes.Bitumen,
+                    minOutputTemperature: 348.15f,
+                    useEntityTemperature: false,
+                    storeOutput: true,
+                    outputElementOffsetx: 0,
+                    outputElementOffsety: 1f);
 
-                    Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
-                    elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
-                }
+                Array.Resize(ref elementConverter.outputElements, elementConverter.outputElements.Length + 1);
+                elementConverter.outputElements[elementConverter.outputElements.GetUpperBound(0)] = bitumenOutput;
             }
         }
 
@@ -167,9 +164,9 @@ namespace Asphalt
                 // Adjusts tile speed settings runtime if the user saved configuration and didn't restart yet
                 if (SettingsManager.TempSettings.UpdateMovementMultiplierRunTime)
                     if (__instance.name == AsphaltConfig.ID + "Complete")
-                        __instance.GetComponent<SimCellOccupier>().movementSpeedMultiplier = SettingsManager.Settings.SpeedMultiplier;
+                        __instance.GetComponent<SimCellOccupier>().movementSpeedMultiplier = FSpeedSlider.MapValue(SettingsManager.Settings.SpeedMultiplier);
 
-                // Stops bitumen production runtime 
+                // Stops bitumen production runtime for newly spawned oil refineries
                 if (SettingsManager.TempSettings.HaltBitumenProduction)
                     if (__instance.name == OilRefineryConfig.ID + "Complete")
                     {

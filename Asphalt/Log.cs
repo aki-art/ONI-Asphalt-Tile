@@ -37,7 +37,7 @@ namespace Asphalt
 #if DEBUG
             try
             {
-               Debug.Log(prefix + arg.ToString());
+               Debug.Log(prefix + " (debug) " + arg.ToString());
             }
             catch (Exception e)
             {
